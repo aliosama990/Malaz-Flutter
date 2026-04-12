@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>يحتاج تطبيق ملاذ إلى الوصول إلى موقعك لاختيار موقع منطقة الأمان.</string>
 </dict>
 </plist>

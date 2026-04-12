@@ -1,0 +1,14 @@
+$collection = Get-Content 'c:\Users\Alios\OneDrive\Desktop\My Grad.. project\Malaz-Flutter\Malaz.postman_collection.json' -Raw | ConvertFrom-Json
+function Show-Items($items, $prefix='') {
+  foreach ($item in $items) {
+    $name = if ([string]::IsNullOrEmpty($prefix)) { $item.name } else { "$prefix / $($item.name)" }
+    if ($null -ne $item.request) {
+      $raw = if ($item.request.url.raw) { $item.request.url.raw } else { '' }
+      Write-Output ("{0}`t{1}`t{2}" -f $item.request.method, $name, $raw)
+    }
+    if ($null -ne $item.item) {
+      Show-Items $item.item $name
+    }
+  }
+}
+Show-Items $collection.item

@@ -23,7 +23,7 @@ class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen> {
   String? _selectedYear;
   String? _selectedMonth;
   String? _selectedDay;
-  String _gender = 'ذكر';
+  int _gender = 0;
   final _deviceController = TextEditingController();
 
   final List<String> _years =
@@ -58,8 +58,34 @@ class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen> {
     super.dispose();
   }
 
+  String _buildBirthDate() {
+    final parts = widget.child.birthDate.split('-');
+    final fallbackYear = parts.isNotEmpty ? parts[0] : '';
+    final fallbackMonth = parts.length > 1 ? parts[1] : '01';
+    final fallbackDay = parts.length > 2 ? parts[2] : '01';
+
+    return '${_selectedYear ?? fallbackYear}-'
+        '${_selectedMonth ?? fallbackMonth}-'
+        '${_selectedDay ?? fallbackDay}';
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.cairo(),
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final childProvider = context.watch<ChildProvider>();
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -156,43 +182,46 @@ class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen> {
                             ),
                             const SizedBox(height: 20),
                             _buildLabel('النوع'),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text('انثى',
-                                        style: GoogleFonts.cairo(
-                                            color: Colors.white)),
-                                    Radio<String>(
-                                      value: 'انثى',
-                                      groupValue: _gender,
-                                      onChanged: (v) =>
-                                          setState(() => _gender = v!),
-                                      activeColor: Colors.white,
-                                      fillColor: MaterialStateProperty.all(
-                                          Colors.white),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  children: [
-                                    Text('ذكر',
-                                        style: GoogleFonts.cairo(
-                                            color: Colors.white)),
-                                    Radio<String>(
-                                      value: 'ذكر',
-                                      groupValue: _gender,
-                                      onChanged: (v) =>
-                                          setState(() => _gender = v!),
-                                      activeColor: Colors.white,
-                                      fillColor: MaterialStateProperty.all(
-                                          Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                            RadioGroup<int>(
+                              groupValue: _gender,
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setState(() => _gender = value);
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text('انثى',
+                                          style: GoogleFonts.cairo(
+                                              color: Colors.white)),
+                                      Radio<int>(
+                                        value: 1,
+                                        activeColor: Colors.white,
+                                        fillColor: const WidgetStatePropertyAll(
+                                            Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Row(
+                                    children: [
+                                      Text('ذكر',
+                                          style: GoogleFonts.cairo(
+                                              color: Colors.white)),
+                                      Radio<int>(
+                                        value: 0,
+                                        activeColor: Colors.white,
+                                        fillColor: const WidgetStatePropertyAll(
+                                            Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 20),
                             _buildLabel('ربط الجهاز'),
@@ -204,32 +233,40 @@ class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen> {
                             const SizedBox(height: 32),
                             Center(
                               child: GestureDetector(
-                                onTap: () {
-                                  final childProvider =
-                                      Provider.of<ChildProvider>(context,
-                                          listen: false);
+                                onTap: () async {
+                                  if (childProvider.isLoading) {
+                                    return;
+                                  }
 
-                                  // ✅ احتفظ بنفس الـ id بتاع الطفل الصح
-                                  final updatedChild = ChildModel(
-                                    id: widget.child.id,
+                                  final provider =
+                                      context.read<ChildProvider>();
+                                  final navigator = Navigator.of(context);
+                                  final updatedChild =
+                                      await provider.updateChildDetails(
+                                    childId: widget.child.id,
                                     name: _nameController.text.isNotEmpty
-                                        ? _nameController.text
+                                        ? _nameController.text.trim()
                                         : widget.child.name,
-                                    birthDate:
-                                        '${_selectedYear ?? widget.child.birthDate.split('-')[0]}-'
-                                        '${_selectedMonth ?? widget.child.birthDate.split('-')[1]}-'
-                                        '${_selectedDay ?? widget.child.birthDate.split('-')[2]}',
+                                    birthDate: _buildBirthDate(),
                                     gender: _gender,
                                     deviceId: _deviceController.text.isNotEmpty
-                                        ? _deviceController.text
+                                        ? _deviceController.text.trim()
                                         : widget.child.deviceId,
-                                    userId: widget.child.userId,
                                   );
 
-                                  childProvider.updateChild(updatedChild);
+                                  if (!mounted) {
+                                    return;
+                                  }
 
-                                  Navigator.pushReplacement(
-                                    context,
+                                  if (updatedChild == null) {
+                                    _showError(
+                                      provider.errorMessage ??
+                                          'حدث خطأ أثناء تحديث بيانات الطفل',
+                                    );
+                                    return;
+                                  }
+
+                                  navigator.pushReplacement(
                                     MaterialPageRoute(
                                       builder: (context) => ChildDetailsScreen(
                                           child: updatedChild),
@@ -247,14 +284,23 @@ class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen> {
                                         color: Colors.white, width: 1.5),
                                   ),
                                   child: Center(
-                                    child: Text(
-                                      'تم',
-                                      style: GoogleFonts.cairo(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                                    child: childProvider.isLoading
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Text(
+                                            'تم',
+                                            style: GoogleFonts.cairo(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                   ),
                                 ),
                               ),

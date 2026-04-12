@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../constants/app_strings.dart';
+
 import '../constants/app_colors.dart';
 import '../constants/app_images.dart';
-import '../providers/auth_provider.dart';
+import '../constants/app_strings.dart';
 import '../providers/child_provider.dart';
 import 'home_screen.dart';
 
@@ -12,9 +12,9 @@ class AddChildScreen extends StatefulWidget {
   final bool canSkip;
 
   const AddChildScreen({
-    Key? key,
+    super.key,
     this.canSkip = true,
-  }) : super(key: key);
+  });
 
   @override
   State<AddChildScreen> createState() => _AddChildScreenState();
@@ -111,6 +111,10 @@ class _AddChildScreenState extends State<AddChildScreen>
     return null;
   }
 
+  int _getGenderValue() {
+    return _selectedGender == AppStrings.addChildGenderFemale ? 1 : 0;
+  }
+
   Future<void> _handleAddChild() async {
     if (_formKey.currentState!.validate()) {
       final birthDate = _getBirthDate();
@@ -125,15 +129,13 @@ class _AddChildScreenState extends State<AddChildScreen>
         _showBirthDateError = false;
       });
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final childProvider = Provider.of<ChildProvider>(context, listen: false);
 
       final success = await childProvider.addChild(
         name: _nameController.text.trim(),
         birthDate: birthDate,
-        gender: _selectedGender,
+        gender: _getGenderValue(),
         deviceId: _deviceIdController.text.trim(),
-        userId: authProvider.user?.id ?? '',
       );
 
       if (success && mounted) {
@@ -256,7 +258,7 @@ class _AddChildScreenState extends State<AddChildScreen>
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      AppColors.registerTitle.withOpacity(0.3),
+                                      AppColors.registerTitle.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -378,7 +380,7 @@ class _AddChildScreenState extends State<AddChildScreen>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
+                  borderSide: const BorderSide(
                     color: AppColors.registerTitle,
                     width: 1.5,
                   ),
@@ -576,9 +578,19 @@ class _AddChildScreenState extends State<AddChildScreen>
               ),
             ),
             // ✅ Radio buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
+            RadioGroup<String>(
+              groupValue: _selectedGender,
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  _selectedGender = value;
+                });
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
                 // أنثى
                 InkWell(
                   onTap: () {
@@ -595,18 +607,12 @@ class _AddChildScreenState extends State<AddChildScreen>
                           color: AppColors.registerTitle,
                           fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      Radio<String>(
-                        value: AppStrings.addChildGenderFemale,
-                        groupValue: _selectedGender,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedGender = value!;
-                          });
-                        },
+                       ),
+                       Radio<String>(
+                         value: AppStrings.addChildGenderFemale,
                         activeColor: AppColors.registerTitle,
-                      ),
-                    ],
+                       ),
+                     ],
                   ),
                 ),
                 const SizedBox(width: 24),
@@ -625,21 +631,16 @@ class _AddChildScreenState extends State<AddChildScreen>
                           color: AppColors.registerTitle,
                           fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      Radio<String>(
-                        value: AppStrings.addChildGenderMale,
-                        groupValue: _selectedGender,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedGender = value!;
-                          });
-                        },
+                       ),
+                       Radio<String>(
+                         value: AppStrings.addChildGenderMale,
                         activeColor: AppColors.registerTitle,
-                      ),
-                    ],
+                       ),
+                     ],
                   ),
                 ),
               ],
+              ),
             ),
           ],
         ),

@@ -6,7 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:malaz_app/helpers/shared_prefs.dart';
 import 'package:malaz_app/providers/auth_provider.dart';
 import 'package:malaz_app/providers/child_provider.dart';
+import 'package:malaz_app/providers/safezone_provider.dart';
 import 'package:malaz_app/screens/splash_screen.dart';
+import 'package:malaz_app/services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +19,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChildProvider()),
+        ChangeNotifierProvider(create: (_) => SafeZoneProvider()),
         // ✅ إضافة NotificationsProvider
         ChangeNotifierProvider(create: (_) => NotificationsProvider()),
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
@@ -32,6 +35,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: ApiService.navigatorKey,
+      scaffoldMessengerKey: ApiService.scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       title: 'Malaz App',
       theme: ThemeData(

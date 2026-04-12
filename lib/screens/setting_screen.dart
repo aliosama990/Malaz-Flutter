@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/initial_avatar.dart';
 import 'home_screen.dart';
+import 'login_screen.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({Key? key}) : super(key: key);
@@ -173,9 +177,11 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   void _showEditProfile(BuildContext context) {
-    final nameController = TextEditingController(text: 'مروه عبد الرحمن');
-    final phoneController = TextEditingController(text: '01012345678');
-    final emailController = TextEditingController(text: 'marwa@email.com');
+    final user = context.read<AuthProvider>().user;
+    final userName = user?.name ?? '';
+    final nameController = TextEditingController(text: userName);
+    final phoneController = TextEditingController(text: user?.phone ?? '');
+    final emailController = TextEditingController(text: user?.email ?? '');
 
     showModalBottomSheet(
       context: context,
@@ -201,17 +207,12 @@ class _SettingScreenState extends State<SettingScreen> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
+                  InitialAvatar(
+                    label: userName,
                     radius: 40,
                     backgroundColor: AppColors.registerTitle,
-                    child: Text(
-                      'م',
-                      style: GoogleFonts.cairo(
-                        fontSize: 28,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    foregroundColor: Colors.white,
+                    role: AvatarRole.parent,
                   ),
                   Positioned(
                     bottom: 0,
@@ -551,9 +552,10 @@ class _SettingScreenState extends State<SettingScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
+              Provider.of<AuthProvider>(context, listen: false).logout();
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => HomeScreen()),
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
                 (route) => false,
               );
             },
@@ -671,7 +673,7 @@ class _SettingScreenState extends State<SettingScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.registerTitle,
+          activeThumbColor: AppColors.registerTitle,
         ),
         Text(label,
             style: GoogleFonts.cairo(

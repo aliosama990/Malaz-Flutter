@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:malaz_app/constants/app_colors.dart';
 import 'package:malaz_app/constants/app_images.dart';
 import 'package:malaz_app/helpers/shared_prefs.dart';
+import 'package:malaz_app/providers/auth_provider.dart';
+import 'package:malaz_app/services/api_service.dart';
 import 'package:malaz_app/screens/login_screen.dart';
 import 'package:malaz_app/screens/home_screen.dart';
 import 'package:malaz_app/screens/onboarding_screen_1.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,9 +18,14 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
+  static const Duration _minimumSplashDuration = Duration(seconds: 3);
+
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  String? _statusMessage;
+  bool _canRetry = false;
+  bool _isCheckingSession = false;
 
   @override
   void initState() {
@@ -51,28 +59,73 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAndNavigate() async {
-    await SharedPrefs.init();
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (!mounted) return;
-
-    bool hasRegistered = SharedPrefs.hasRegistered;
-    bool isLoggedIn = SharedPrefs.isLoggedIn;
-
-    Widget nextScreen;
-
-    if (!hasRegistered) {
-      nextScreen = const OnboardingScreen1();
-    } else if (isLoggedIn) {
-      nextScreen = const HomeScreen();
-    } else {
-      nextScreen = const LoginScreen();
+    if (_isCheckingSession) {
+      return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => nextScreen),
-    );
+    setState(() {
+      _isCheckingSession = true;
+      _statusMessage = null;
+      _canRetry = false;
+    });
+
+    final splashDelay = Future<void>.delayed(_minimumSplashDuration);
+
+    try {
+      final hasRegistered = SharedPrefs.hasRegistered;
+      final isLoggedIn = SharedPrefs.isLoggedIn;
+
+      Widget nextScreen;
+
+      if (!hasRegistered) {
+        nextScreen = const OnboardingScreen1();
+      } else if (!isLoggedIn) {
+        nextScreen = const LoginScreen();
+      } else {
+        if (!mounted) {
+          return;
+        }
+
+        final authProvider = context.read<AuthProvider>();
+        final isTokenValid = await authProvider.validateStoredToken();
+
+        if (!isTokenValid) {
+          nextScreen = const LoginScreen();
+        } else {
+          nextScreen = const HomeScreen();
+        }
+      }
+
+      await splashDelay;
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => nextScreen),
+      );
+    } on ApiException catch (error) {
+      await splashDelay;
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _statusMessage = error.errorMessages.isNotEmpty
+            ? error.errorMessages.join('\n')
+            : error.message;
+        _canRetry = true;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingSession = false;
+        });
+      }
+    }
   }
 
   @override
@@ -94,10 +147,38 @@ class _SplashScreenState extends State<SplashScreen>
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 40),
-                const CircularProgressIndicator(
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.splashLoader),
-                ),
+                if (_statusMessage == null)
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.splashLoader,
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      children: [
+                        Text(
+                          _statusMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.registerTitle,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_canRetry)
+                          ElevatedButton(
+                            onPressed:
+                                _isCheckingSession ? null : _checkAndNavigate,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.registerTitle,
+                            ),
+                            child: const Text('إعادة المحاولة'),
+                          ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

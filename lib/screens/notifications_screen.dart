@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_colors.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/initial_avatar.dart';
 import 'chatbot_screen.dart';
 import 'safezone_screen.dart';
 import 'child_details_screen.dart';
@@ -238,6 +240,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   Widget _buildHeader(NotificationsProvider notificationsProvider) {
+    final userName = context.watch<AuthProvider>().user?.name ?? '';
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -249,27 +253,39 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           ),
           child: Align(
             alignment: Alignment.centerRight,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ اسم الأهل ثابت لحد ما يتربط بالداتا بيز
-                Text(
-                  'مروه عبد الرحمن',
-                  style: GoogleFonts.cairo(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      userName,
+                      style: GoogleFonts.cairo(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'تقارير ${widget.child.name}',
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-
-                Text(
-                  'تقارير ${widget.child.name}',
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white70,
-                  ),
+                const SizedBox(width: 12),
+                InitialAvatar(
+                  label: userName,
+                  radius: 22,
+                  backgroundColor: Colors.white.withValues(alpha: 0.18),
+                  foregroundColor: Colors.white,
+                  role: AvatarRole.parent,
                 ),
               ],
             ),

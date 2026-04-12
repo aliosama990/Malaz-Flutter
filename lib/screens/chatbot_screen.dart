@@ -3,14 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:malaz_app/models/child_mode.dart';
 import 'package:malaz_app/screens/notifications_screen.dart';
 import 'package:malaz_app/screens/safezone_screen.dart';
-import 'package:malaz_app/screens/setting_child_screen.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_colors.dart';
+import '../providers/auth_provider.dart';
 import '../providers/chatbot_provider.dart';
+import '../widgets/initial_avatar.dart';
 import 'chatbot_plus_screen.dart';
 import 'child_details_screen.dart';
-import 'setting_screen.dart'; // 
+import 'setting_screen.dart'; //
 
 class ChatbotScreen extends StatefulWidget {
   final ChildModel child;
@@ -26,6 +27,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   final TextEditingController _messageController = TextEditingController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
+  String? _queuedProviderError;
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -80,12 +82,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatbotProvider =
           Provider.of<ChatbotProvider>(context, listen: false);
-      if (chatbotProvider.chats.isEmpty) {
-        chatbotProvider.loadDummyChats();
-      }
-      if (chatbotProvider.currentMessages.isEmpty) {
-        chatbotProvider.addDummyMessages();
-      }
+      chatbotProvider.initialize();
     });
   }
 
@@ -110,10 +107,12 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   }
 
   void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
     final chatbotProvider =
         Provider.of<ChatbotProvider>(context, listen: false);
+    if (chatbotProvider.isSending) return;
+
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
     chatbotProvider.sendMessage(text);
     _messageController.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -121,11 +120,38 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     });
   }
 
+  void _handleProviderError(ChatbotProvider chatbotProvider) {
+    final errorMessage = chatbotProvider.errorMessage;
+    if (errorMessage == null ||
+        errorMessage.trim().isEmpty ||
+        _queuedProviderError == errorMessage) {
+      return;
+    }
+
+    _queuedProviderError = errorMessage;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        _queuedProviderError = null;
+        return;
+      }
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+
+      if (chatbotProvider.errorMessage == errorMessage) {
+        chatbotProvider.clearError();
+      }
+      _queuedProviderError = null;
+    });
+  }
+
   void _onNavTap(int index) {
     if (index == _currentNavIndex) return;
 
     switch (index) {
-      case 4: // 
+      case 4: //
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -134,7 +160,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         );
         break;
 
-      case 3: // 
+      case 3: //
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -143,7 +169,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         );
         break;
 
-      case 2: // 
+      case 2: //
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -152,10 +178,10 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         );
         break;
 
-      case 1: // 
+      case 1: //
         break;
 
-      case 0: // 
+      case 0: //
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -175,6 +201,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       body: SafeArea(
         child: Consumer<ChatbotProvider>(
           builder: (context, chatbotProvider, child) {
+            _handleProviderError(chatbotProvider);
             return Column(
               children: [
                 SlideTransition(
@@ -195,16 +222,6 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                     ),
                   ),
                 ),
-                if (chatbotProvider.isLoading)
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(
-                        color: AppColors.registerTitle,
-                      ),
-                    ),
-                  ),
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
@@ -228,6 +245,8 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   }
 
   Widget _buildHeader() {
+    final userName = context.watch<AuthProvider>().user?.name ?? '';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
@@ -249,13 +268,26 @@ class _ChatbotScreenState extends State<ChatbotScreen>
             },
           ),
           // ✅ اسم الأهل ثابت لحد ما يتربط بالداتا بيز
-          Text(
-            'مروه عبد الرحمن',
-            style: GoogleFonts.cairo(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                userName,
+                style: GoogleFonts.cairo(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              InitialAvatar(
+                label: userName,
+                radius: 20,
+                backgroundColor: Colors.white.withValues(alpha: 0.18),
+                foregroundColor: Colors.white,
+                role: AvatarRole.parent,
+              ),
+            ],
           ),
         ],
       ),
@@ -458,41 +490,100 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
+
+    final messages = chatbotProvider.currentMessages;
+    final showTypingIndicator = chatbotProvider.isSending;
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: chatbotProvider.currentMessages.length,
+      itemCount: messages.length + (showTypingIndicator ? 1 : 0),
       itemBuilder: (context, index) {
-        final message = chatbotProvider.currentMessages[index];
+        if (showTypingIndicator && index == messages.length) {
+          return _buildTypingIndicatorBubble();
+        }
+
+        final message = messages[index];
         return _buildMessageBubble(message);
       },
     );
   }
 
   Widget _buildMessageBubble(Message message) {
+    final messageBubble = Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.75,
+      ),
+      decoration: BoxDecoration(
+        color:
+            message.isUser ? AppColors.registerTitle : const Color(0xFFD9D9D9),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Text(
+        message.text,
+        style: GoogleFonts.cairo(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: message.isUser ? Colors.white : Colors.black,
+          height: 1.4,
+        ),
+        textAlign: message.isUser ? TextAlign.right : TextAlign.left,
+      ),
+    );
+
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: message.isUser
+          ? messageBubble
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  margin: const EdgeInsets.only(right: 8, top: 4),
+                  decoration: const BoxDecoration(
+                    color: AppColors.registerTitle,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.smart_toy_outlined,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                Flexible(child: messageBubble),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildTypingIndicatorBubble() {
+    return Align(
+      alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: message.isUser
-              ? AppColors.registerTitle
-              : const Color(0xFFD9D9D9),
+          color: const Color(0xFFD9D9D9),
           borderRadius: BorderRadius.circular(18),
         ),
-        child: Text(
-          message.text,
-          style: GoogleFonts.cairo(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: message.isUser ? Colors.white : Colors.black,
-            height: 1.4,
-          ),
-          textAlign: message.isUser ? TextAlign.right : TextAlign.left,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            return Container(
+              width: 6,
+              height: 6,
+              margin: EdgeInsets.only(right: index == 2 ? 0 : 4),
+              decoration: const BoxDecoration(
+                color: Color(0xFF6B6B6B),
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
         ),
       ),
     );
