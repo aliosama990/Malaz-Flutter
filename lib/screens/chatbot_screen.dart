@@ -79,10 +79,14 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       _slideController.forward();
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final chatbotProvider =
           Provider.of<ChatbotProvider>(context, listen: false);
-      chatbotProvider.initialize();
+      await chatbotProvider.initialize();
+      if (!mounted) {
+        return;
+      }
+      chatbotProvider.startNewChat();
     });
   }
 

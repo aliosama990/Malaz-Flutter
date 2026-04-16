@@ -162,8 +162,16 @@ class ApiService {
     } on ApiException {
       rethrow;
     } on SocketException catch (error) {
+      final details = <String>[
+        'SocketException',
+        'osError: ${error.osError}',
+        'address: ${error.address}',
+        'port: ${error.port}',
+        'exception: $error',
+      ].join('\n');
+
       throw ApiException(
-        'تعذر الاتصال بالإنترنت. تحقق من الشبكة وحاول مرة أخرى.',
+        'تعذر الاتصال بالإنترنت. تفاصيل الاتصال:\n$details',
         cause: error,
       );
     } on TimeoutException catch (error) {
