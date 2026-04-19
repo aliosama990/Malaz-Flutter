@@ -1,9 +1,66 @@
+enum ChildCondition {
+  normal(0, 'Normal'),
+  autism(1, 'Autism'),
+  adhd(2, 'ADHD');
+
+  const ChildCondition(this.apiValue, this.displayLabel);
+
+  final int apiValue;
+  final String displayLabel;
+
+  static ChildCondition? tryParse(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is int) {
+      return fromApiValue(value);
+    }
+
+    if (value is num) {
+      return fromApiValue(value.toInt());
+    }
+
+    if (value is String) {
+      final normalizedValue = value.trim();
+      if (normalizedValue.isEmpty) {
+        return null;
+      }
+
+      final parsedValue = int.tryParse(normalizedValue);
+      if (parsedValue != null) {
+        return fromApiValue(parsedValue);
+      }
+
+      for (final condition in ChildCondition.values) {
+        if (condition.displayLabel.toLowerCase() ==
+            normalizedValue.toLowerCase()) {
+          return condition;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  static ChildCondition? fromApiValue(int value) {
+    for (final condition in ChildCondition.values) {
+      if (condition.apiValue == value) {
+        return condition;
+      }
+    }
+
+    return null;
+  }
+}
+
 class ChildModel {
   final String id;
   final String name;
   final String birthDate;
   final int gender;
   final String deviceId;
+  final ChildCondition? condition;
 
   ChildModel({
     required this.id,
@@ -11,6 +68,7 @@ class ChildModel {
     required this.birthDate,
     required this.gender,
     required this.deviceId,
+    this.condition,
   });
 
   int get age {
@@ -26,11 +84,16 @@ class ChildModel {
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
     return ChildModel(
-      id: _requireString(json, 'id'),
-      name: _requireString(json, 'name'),
-      birthDate: _normalizeBirthDate(json['birthDate']),
-      gender: _requireGender(json['gender']),
-      deviceId: _requireOptionalString(json['deviceId']),
+      id: _requireString(json, const ['id', 'Id']),
+      name: _requireString(json, const ['name', 'Name']),
+      birthDate: _normalizeBirthDate(
+          _readValue(json, const ['birthDate', 'BirthDate'])),
+      gender: _requireGender(_readValue(json, const ['gender', 'Gender'])),
+      deviceId: _requireOptionalString(
+          _readValue(json, const ['deviceId', 'DeviceId'])),
+      condition: ChildCondition.tryParse(
+        _readValue(json, const ['condition', 'Condition']),
+      ),
     );
   }
 
@@ -41,16 +104,27 @@ class ChildModel {
       'birthDate': birthDate,
       'gender': gender,
       'deviceId': deviceId,
+      if (condition != null) 'condition': condition!.apiValue,
     };
   }
 
-  static String _requireString(Map<String, dynamic> json, String key) {
-    final value = json[key];
+  static String _requireString(Map<String, dynamic> json, List<String> keys) {
+    final value = _readValue(json, keys);
     if (value is String && value.trim().isNotEmpty) {
       return value;
     }
 
-    throw FormatException('Invalid child field: $key');
+    throw FormatException('Invalid child field: ${keys.first}');
+  }
+
+  static dynamic _readValue(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      if (json.containsKey(key)) {
+        return json[key];
+      }
+    }
+
+    return null;
   }
 
   static String _requireOptionalString(dynamic value) {
@@ -74,7 +148,24 @@ class ChildModel {
       return value.toInt();
     }
 
-    throw const FormatException('Invalid child field: gender');
+    if (value is String) {
+      final normalizedValue = value.trim();
+      final parsedValue = int.tryParse(normalizedValue);
+      if (parsedValue != null) {
+        return parsedValue;
+      }
+
+      switch (normalizedValue.toLowerCase()) {
+        case 'male':
+          return 0;
+        case 'female':
+          return 1;
+      }
+    }
+
+    throw FormatException(
+      'Invalid child field: gender (value: $value, type: ${value?.runtimeType})',
+    );
   }
 
   static String _normalizeBirthDate(dynamic value) {

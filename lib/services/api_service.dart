@@ -296,14 +296,17 @@ class ApiResponse {
 
   factory ApiResponse.fromHttpResponse(http.Response response) {
     final parsedBody = _parseBody(response);
+    final envelope = parsedBody is Map<String, dynamic>
+        ? _tryReadEnvelope(parsedBody)
+        : null;
 
-    if (parsedBody is Map<String, dynamic> && _looksLikeEnvelope(parsedBody)) {
+    if (parsedBody is Map<String, dynamic> && envelope != null) {
       return ApiResponse(
         statusCode: response.statusCode,
-        success: parsedBody['success'] == true,
+        success: envelope.success,
         hasEnvelope: true,
-        errorMessages: _normalizeErrorMessages(parsedBody['errorMessages']),
-        data: parsedBody['data'],
+        errorMessages: envelope.errorMessages,
+        data: envelope.data,
         rawBody: parsedBody,
         headers: response.headers,
       );
@@ -347,10 +350,34 @@ class ApiResponse {
     }
   }
 
-  static bool _looksLikeEnvelope(Map<String, dynamic> json) {
-    return json.containsKey('success') ||
-        json.containsKey('errorMessages') ||
-        json.containsKey('data');
+  static _EnvelopeData? _tryReadEnvelope(Map<String, dynamic> json) {
+    const successKeys = <String>['success', 'Success'];
+    const errorMessageKeys = <String>['errorMessages', 'ErrorMessages'];
+    const dataKeys = <String>['data', 'Data'];
+    final hasEnvelope = successKeys.any(json.containsKey) ||
+        errorMessageKeys.any(json.containsKey) ||
+        dataKeys.any(json.containsKey);
+
+    if (!hasEnvelope) {
+      return null;
+    }
+
+    return _EnvelopeData(
+      success: _readFirstValue(json, successKeys) == true,
+      errorMessages:
+          _normalizeErrorMessages(_readFirstValue(json, errorMessageKeys)),
+      data: _readFirstValue(json, dataKeys),
+    );
+  }
+
+  static dynamic _readFirstValue(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      if (json.containsKey(key)) {
+        return json[key];
+      }
+    }
+
+    return null;
   }
 
   static List<String> _normalizeErrorMessages(dynamic value) {
@@ -393,4 +420,16 @@ class ApiException implements Exception {
   String toString() {
     return 'ApiException(message: $message, statusCode: $statusCode, errorMessages: $errorMessages)';
   }
+}
+
+class _EnvelopeData {
+  const _EnvelopeData({
+    required this.success,
+    required this.errorMessages,
+    required this.data,
+  });
+
+  final bool success;
+  final List<String> errorMessages;
+  final dynamic data;
 }

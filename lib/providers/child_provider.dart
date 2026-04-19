@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:malaz_app/models/alert_setting_model.dart';
 import 'package:malaz_app/models/child_mode.dart';
 
+import '../constants/app_strings.dart';
 import '../services/api_service.dart';
 
 class ChildProvider with ChangeNotifier {
@@ -22,6 +23,7 @@ class ChildProvider with ChangeNotifier {
     required String birthDate,
     required int gender,
     required String deviceId,
+    required ChildCondition condition,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -35,6 +37,7 @@ class ChildProvider with ChangeNotifier {
           'birthDate': birthDate,
           'gender': gender,
           'deviceId': deviceId,
+          'Condition': condition.apiValue,
         },
       );
 
@@ -43,10 +46,12 @@ class ChildProvider with ChangeNotifier {
       updateChild(newChild);
       return true;
     } on ApiException catch (error) {
-      _errorMessage = _getApiErrorMessage(error);
+      _debugLogChildMutationError('addChild', error);
+      _errorMessage = _getChildMutationErrorMessage(error);
       return false;
-    } catch (e) {
-      _errorMessage = 'حدث خطأ أثناء إضافة الطفل';
+    } catch (error, stackTrace) {
+      _debugLogChildMutationError('addChild', error, stackTrace: stackTrace);
+      _errorMessage = AppStrings.addChildError;
       return false;
     } finally {
       _isLoading = false;
@@ -150,9 +155,15 @@ class ChildProvider with ChangeNotifier {
       updateChild(updatedChild);
       return updatedChild;
     } on ApiException catch (error) {
-      _errorMessage = _getApiErrorMessage(error);
+      _debugLogChildMutationError('updateChildDetails', error);
+      _errorMessage = _getChildMutationErrorMessage(error);
       return null;
-    } catch (e) {
+    } catch (error, stackTrace) {
+      _debugLogChildMutationError(
+        'updateChildDetails',
+        error,
+        stackTrace: stackTrace,
+      );
       _errorMessage = 'حدث خطأ أثناء تحديث بيانات الطفل';
       return null;
     } finally {
@@ -239,11 +250,12 @@ class ChildProvider with ChangeNotifier {
   ChildModel _parseChildFromResponse(ApiResponse response) {
     try {
       return ChildModel.fromJson(_requireMap(response.data));
-    } on FormatException {
+    } on FormatException catch (error) {
       throw ApiException(
-        'Unexpected response shape.',
+        'Unexpected response shape: ${error.message}',
         statusCode: response.statusCode,
         responseBody: response.rawBody,
+        cause: error,
       );
     }
   }
@@ -281,5 +293,129 @@ class ChildProvider with ChangeNotifier {
       return error.errorMessages.join('\n');
     }
     return error.message;
+  }
+
+  String _getChildMutationErrorMessage(ApiException error) {
+    final technicalDetails = _buildTechnicalErrorDetails(error);
+    final normalizedDetails = technicalDetails.toLowerCase();
+
+    if (_isDuplicateDeviceError(normalizedDetails)) {
+      return AppStrings.childDeviceAlreadyLinkedError;
+    }
+
+    if (_containsAny(normalizedDetails, const [
+      'unexpected response shape',
+      'invalid child field',
+      'invalid child response map',
+      'invalid child response list',
+      'formatexception',
+    ])) {
+      return AppStrings.childResponseReadError;
+    }
+
+    if (_containsAny(normalizedDetails, const [
+      'validation',
+      'one or more validation errors',
+      'invalid',
+      'required',
+      'must not be empty',
+      'must not be null',
+      'must be',
+    ])) {
+      return AppStrings.childValidationError;
+    }
+
+    if (_containsAny(normalizedDetails, const [
+      'save',
+      'saving',
+      'dbupdate',
+      'database',
+      'sql',
+      'entity changes',
+    ])) {
+      return AppStrings.childSaveFailedError;
+    }
+
+    final displayMessage = _getApiErrorMessage(error);
+    if (_containsArabic(displayMessage)) {
+      return displayMessage;
+    }
+
+    return AppStrings.addChildError;
+  }
+
+  String _buildTechnicalErrorDetails(ApiException error) {
+    final parts = <String>[
+      error.message,
+      if (error.errorMessages.isNotEmpty) error.errorMessages.join('\n'),
+      if (error.responseBody != null) error.responseBody.toString(),
+      if (error.cause != null) error.cause.toString(),
+    ];
+
+    return parts.where((part) => part.trim().isNotEmpty).join('\n');
+  }
+
+  bool _isDuplicateDeviceError(String message) {
+    const duplicateTerms = <String>[
+      'duplicate',
+      'already exists',
+      'already assigned',
+      'already linked',
+      'in use',
+      'used before',
+      'unique',
+    ];
+    const deviceTerms = <String>[
+      'device',
+      'deviceid',
+      'device id',
+      'serial',
+      'serial number',
+    ];
+
+    return (_containsAny(message, duplicateTerms) &&
+            _containsAny(message, deviceTerms)) ||
+        _containsAny(message, const [
+          'serial number already exists',
+          'deviceid already exists',
+          'device already exists',
+        ]);
+  }
+
+  bool _containsAny(String message, List<String> patterns) {
+    for (final pattern in patterns) {
+      if (message.contains(pattern)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool _containsArabic(String message) {
+    return RegExp(r'[\u0600-\u06FF]').hasMatch(message);
+  }
+
+  void _debugLogChildMutationError(
+    String operation,
+    Object error, {
+    StackTrace? stackTrace,
+  }) {
+    assert(() {
+      debugPrint('[$operation] child mutation error: $error');
+      if (error is ApiException) {
+        debugPrint('[$operation] statusCode: ${error.statusCode}');
+        debugPrint('[$operation] errorMessages: ${error.errorMessages}');
+        debugPrint('[$operation] responseBody: ${error.responseBody}');
+        debugPrint('[$operation] cause: ${error.cause}');
+      }
+      if (stackTrace != null) {
+        debugPrintStack(
+          stackTrace: stackTrace,
+          label: '[$operation] stackTrace',
+        );
+      }
+      return true;
+    }());
   }
 }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
+import '../models/child_mode.dart';
 import '../providers/child_provider.dart';
 import 'home_screen.dart';
 
@@ -28,6 +29,7 @@ class _AddChildScreenState extends State<AddChildScreen>
   final TextEditingController _deviceIdController = TextEditingController();
 
   String _selectedGender = AppStrings.addChildGenderMale;
+  ChildCondition? _selectedCondition;
   String? _selectedMonth;
   String? _selectedDay;
   String? _selectedYear;
@@ -117,6 +119,11 @@ class _AddChildScreenState extends State<AddChildScreen>
 
   Future<void> _handleAddChild() async {
     if (_formKey.currentState!.validate()) {
+      final selectedCondition = _selectedCondition;
+      if (selectedCondition == null) {
+        return;
+      }
+
       final birthDate = _getBirthDate();
       if (birthDate == null) {
         setState(() {
@@ -136,6 +143,7 @@ class _AddChildScreenState extends State<AddChildScreen>
         birthDate: birthDate,
         gender: _getGenderValue(),
         deviceId: _deviceIdController.text.trim(),
+        condition: selectedCondition,
       );
 
       if (success && mounted) {
@@ -232,6 +240,10 @@ class _AddChildScreenState extends State<AddChildScreen>
 
                       const SizedBox(height: 14),
 
+                      _buildConditionSection(),
+
+                      const SizedBox(height: 14),
+
                       _buildLabeledTextField(
                         label: 'ربط الجهاز',
                         controller: _deviceIdController,
@@ -257,8 +269,8 @@ class _AddChildScreenState extends State<AddChildScreen>
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      AppColors.registerTitle.withValues(alpha: 0.3),
+                                  color: AppColors.registerTitle
+                                      .withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -591,56 +603,166 @@ class _AddChildScreenState extends State<AddChildScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                // أنثى
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedGender = AppStrings.addChildGenderFemale;
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      Text(
-                        AppStrings.addChildGenderFemale,
-                        style: GoogleFonts.cairo(
-                          fontSize: 15,
-                          color: AppColors.registerTitle,
-                          fontWeight: FontWeight.w500,
+                  // أنثى
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedGender = AppStrings.addChildGenderFemale;
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          AppStrings.addChildGenderFemale,
+                          style: GoogleFonts.cairo(
+                            fontSize: 15,
+                            color: AppColors.registerTitle,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                       ),
-                       Radio<String>(
-                         value: AppStrings.addChildGenderFemale,
-                        activeColor: AppColors.registerTitle,
-                       ),
-                     ],
-                  ),
-                ),
-                const SizedBox(width: 24),
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedGender = AppStrings.addChildGenderMale;
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      Text(
-                        AppStrings.addChildGenderMale,
-                        style: GoogleFonts.cairo(
-                          fontSize: 15,
-                          color: AppColors.registerTitle,
-                          fontWeight: FontWeight.w500,
+                        const Radio<String>(
+                          value: AppStrings.addChildGenderFemale,
+                          activeColor: AppColors.registerTitle,
                         ),
-                       ),
-                       Radio<String>(
-                         value: AppStrings.addChildGenderMale,
-                        activeColor: AppColors.registerTitle,
-                       ),
-                     ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 24),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedGender = AppStrings.addChildGenderMale;
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          AppStrings.addChildGenderMale,
+                          style: GoogleFonts.cairo(
+                            fontSize: 15,
+                            color: AppColors.registerTitle,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Radio<String>(
+                          value: AppStrings.addChildGenderMale,
+                          activeColor: AppColors.registerTitle,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConditionSection() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 4, bottom: 6),
+              child: Text(
+                'الحالة الصحية',
+                textAlign: TextAlign.right,
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.registerTitle,
+                ),
+              ),
+            ),
+            DropdownButtonFormField<ChildCondition>(
+              initialValue: _selectedCondition,
+              isExpanded: true,
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
+              dropdownColor: Colors.white,
+              menuMaxHeight: 250,
+              decoration: InputDecoration(
+                hintText: 'اختر الحالة الصحية',
+                hintStyle: GoogleFonts.cairo(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1.5,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1.5,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.registerTitle,
+                    width: 1.5,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 1.5,
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
+              items: ChildCondition.values.map((condition) {
+                return DropdownMenuItem<ChildCondition>(
+                  value: condition,
+                  child: Text(
+                    condition.displayLabel,
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCondition = value;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'الحالة الصحية مطلوبة';
+                }
+                return null;
+              },
             ),
           ],
         ),
