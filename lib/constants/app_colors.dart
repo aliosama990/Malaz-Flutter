@@ -18,7 +18,6 @@ class AppColors {
   static const Color error = Color(0xFFD32F2F);
   static const Color success = Color(0xFF388E3C);
 
-  
   static const Color onboardingGradientStart = Color(0xFFFFFFFF);
   static const Color onboardingGradientEnd = Color(0xFFFFFFFF);
   static const Color onboardingDescription = Color(0xFF0E68A9);
@@ -26,11 +25,10 @@ class AppColors {
   static const Color onboardingIndicatorActive = Color(0xFF2196F3);
   static const Color onboardingIndicatorInactive = Color(0xFFD1D5DB);
 
-  
-  static const Color onboardingTitleGradientStart =
-      Color(0xFF8FB7D0); 
-  static const Color onboardingTitleGradientEnd = Color(0xff224D67);
+  static const Color onboardingTitleGradientStart = Color(0xFF8FB7D0);
+  static const Color onboardingTitleGradientEnd = Color(0xFF224D67);
   static const Color registerTitle = Color(0xFF224D67);
+  static const Color splashButton = Color(0xFF6A6898);
   static const Color registerFieldBackground = Color(0xFFC0BFBF);
   static const Color registerFieldBorder = Color(0xFF646769);
   static const Color registerFieldHint = Color(0xFF646769);
@@ -38,7 +36,7 @@ class AppColors {
   static const Color registerButtonEnd = Color(0xFF646769);
 
   static const Color homeBackground = Color(0xFFF5F7FA);
-  static const Color homeNavBar = Color(0xFF354D8BAB);
+  static const Color homeNavBar = Color(0x354D8BAB);
   static const Color homeUserName = Color(0xFF103043);
   static const Color homeActionButton = Color(0xFFFFFFFF);
   static const Color homeActionBorder = Color(0xFF224D67);
@@ -47,8 +45,7 @@ class AppColors {
   static const Color homeNotificationContainer = Color(0xFFD8D7D7);
   static const Color homeNotificationGradientStart = Color(0xFF99B8C8);
   static const Color homeNotificationGradientEnd = Color(0xFF6B8FA3);
-  static const Color homeNavActive = Color(0xff539DF3);
+  static const Color homeNavActive = Color(0xFF539DF3);
   static const Color homeNavInactive = Color(0xFF4A4A4A);
   static const Color homeNavIndicator = Color(0xFF9E9E9E);
-
 }

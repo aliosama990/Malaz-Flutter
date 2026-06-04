@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:malaz_app/models/child_mode.dart';
-import 'package:malaz_app/providers/notification_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../constants/app_strings.dart';
-import '../constants/app_colors.dart';
+import 'package:provider/provider.dart';
+
+import '../models/child_mode.dart';
+import '../providers/auth_provider.dart';
+import '../providers/notification_provider.dart';
+import '../widgets/main_bottom_nav.dart';
+import '../widgets/reference_parent_header.dart';
 import 'chatbot_screen.dart';
+import 'home_screen.dart';
+import 'reports_screen.dart';
 import 'safezone_screen.dart';
-import 'child_details_screen.dart';
 import 'setting_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({
+    super.key,
+    required this.child,
+  });
+
   final ChildModel child;
-  const NotificationsScreen({Key? key, required this.child}) : super(key: key);
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -21,19 +28,22 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen>
     with TickerProviderStateMixin {
-  int _currentNavIndex = 2;
+  static const Color _pageBackground = Color(0xFFB8B8B8);
+  static const Color _navPurple = Color(0xFF6D69A9);
+  static const Color _textBlue = Color(0xFF183B58);
+  static const Color _greenDot = Color(0xFF18E853);
+  static const Color _yellowDot = Color(0xFFD8C700);
+  static const Color _redAccent = Color(0xFFFF4E5F);
 
-  bool _isEmergencyExpanded = false;
-  bool _isDailyExpanded = false;
-  bool _isWeeklyExpanded = false;
+  late final AnimationController _fadeController;
+  late final AnimationController _headerController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _headerSlideAnimation;
 
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
-  late AnimationController _headerController;
-
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<Offset> _headerSlideAnimation;
+  String get _selectedChildName {
+    final childName = widget.child.name.trim();
+    return childName.isEmpty ? 'طفلك' : childName;
+  }
 
   @override
   void initState() {
@@ -41,514 +51,408 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 700),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
-    );
-
-    _slideController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-    );
-
     _headerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
     );
     _headerSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.3),
+      begin: const Offset(0, -0.08),
       end: Offset.zero,
     ).animate(
-      CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic),
+      CurvedAnimation(
+        parent: _headerController,
+        curve: Curves.easeOutCubic,
+      ),
     );
 
     _headerController.forward();
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _fadeController.forward();
-    });
-    Future.delayed(const Duration(milliseconds: 200), () {
-      _slideController.forward();
-    });
+    _fadeController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final notificationsProvider =
-          Provider.of<NotificationsProvider>(context, listen: false);
-      if (notificationsProvider.notifications.isEmpty) {
-        notificationsProvider.loadDummyData();
-      }
+      final notificationsProvider = context.read<NotificationsProvider>();
+      notificationsProvider.ensureDummyDataForChild(_selectedChildName);
     });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
-    _slideController.dispose();
     _headerController.dispose();
     super.dispose();
   }
 
-  String _getCurrentDate() {
-    final now = DateTime.now();
-    final formatter = DateFormat('EEE dd/M/yyyy');
-    return formatter.format(now).toUpperCase();
+  double _screenScale(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final widthScale = (screenSize.width / 393).clamp(0.88, 1.0).toDouble();
+    final heightScale = (screenSize.height / 852).clamp(0.82, 1.0).toDouble();
+    return widthScale < heightScale ? widthScale : heightScale;
   }
 
-  void _onNavTap(int index) {
-    if (index == _currentNavIndex) return;
+  void _goHome() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+  }
 
+  void _openSettings() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingScreen()),
+    );
+  }
+
+  void _onBottomNavTap(int index) {
     switch (index) {
-      case 4: //
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChildDetailsScreen(child: widget.child),
-          ),
-        );
-        break;
-
-      case 3: //
+      case MainBottomNav.homeIndex:
+        _goHome();
+        return;
+      case MainBottomNav.mapIndex:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => SafeZonesScreen(child: widget.child),
           ),
         );
-        break;
-
-      case 2: //
-        break;
-
-      case 1: //
+        return;
+      case MainBottomNav.reportsIndex:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportsScreen(child: widget.child),
+          ),
+        );
+        return;
+      case MainBottomNav.chatIndex:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => ChatbotScreen(child: widget.child),
           ),
         );
-        break;
-
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SettingScreen(),
-          ),
-        );
-        break;
+        return;
+      case MainBottomNav.settingsIndex:
+        _openSettings();
+        return;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Consumer<NotificationsProvider>(
-          builder: (context, notificationsProvider, child) {
-            return Column(
-              children: [
-                SlideTransition(
-                  position: _headerSlideAnimation,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: _buildHeader(notificationsProvider),
-                  ),
-                ),
-                if (notificationsProvider.isLoading)
-                  const Expanded(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF224D67),
-                      ),
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: _pageBackground,
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Consumer2<AuthProvider, NotificationsProvider>(
+            builder: (context, authProvider, notificationsProvider, _) {
+              final rawUserName = authProvider.user?.name.trim();
+              final userName = rawUserName == null || rawUserName.isEmpty
+                  ? 'ولي الأمر'
+                  : rawUserName;
+              final parentGender = authProvider.user?.parentGender;
+              final emergencyNotifications =
+                  notificationsProvider.emergencyNotifications;
+              final dailyNotifications =
+                  notificationsProvider.dailyNotifications;
+
+              return Column(
+                children: [
+                  SlideTransition(
+                    position: _headerSlideAnimation,
+                    child: ReferenceParentHeader(
+                      userName: userName,
+                      subtitle: 'يوم سعيد لك ولأطفالك، نحن نراقبهم بكل حب',
+                      parentGender: parentGender,
+                      showBell: true,
+                      bellBadgeCount: notificationsProvider.unreadCount,
                     ),
-                  )
-                else
+                  ),
+                  SizedBox(height: scaled(16)),
                   Expanded(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                          child: Column(
-                            children: [
-                              _buildNotificationSection(
-                                title: AppStrings.emergencyNotifications,
-                                isExpanded: _isEmergencyExpanded,
-                                notifications: notificationsProvider
-                                    .emergencyNotifications,
-                                onToggle: () {
-                                  setState(() {
-                                    _isEmergencyExpanded =
-                                        !_isEmergencyExpanded;
-                                  });
-                                },
+                      child: notificationsProvider.isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: _navPurple,
                               ),
-                              const SizedBox(height: 18),
-                              _buildNotificationSection(
-                                title: AppStrings.dailyNotifications,
-                                dateLabel: _getCurrentDate(),
-                                isExpanded: _isDailyExpanded,
-                                notifications:
-                                    notificationsProvider.dailyNotifications,
-                                onToggle: () {
-                                  setState(() {
-                                    _isDailyExpanded = !_isDailyExpanded;
-                                  });
-                                },
+                            )
+                          : SingleChildScrollView(
+                              padding: EdgeInsets.fromLTRB(
+                                scaled(12),
+                                0,
+                                scaled(12),
+                                scaled(16),
                               ),
-                              const SizedBox(height: 18),
-                              _buildNotificationSection(
-                                title: AppStrings.weeklyNotifications,
-                                isExpanded: _isWeeklyExpanded,
-                                notifications:
-                                    notificationsProvider.weeklyNotifications,
-                                onToggle: () {
-                                  setState(() {
-                                    _isWeeklyExpanded = !_isWeeklyExpanded;
-                                  });
-                                },
+                              child: Column(
+                                children: [
+                                  _buildAlertsCard(
+                                    title: 'تنبيهات الطوارئ',
+                                    notifications: emergencyNotifications,
+                                  ),
+                                  SizedBox(height: scaled(22)),
+                                  _buildAlertsCard(
+                                    title: 'التنبيهات اليوميه',
+                                    notifications: dailyNotifications,
+                                    leadingIcon: Icons.calendar_month_outlined,
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+                    ),
+                  ),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SafeArea(
+                      top: false,
+                      child: MainBottomNav(
+                        currentIndex: MainBottomNav.reportsIndex,
+                        onTap: _onBottomNavTap,
+                        sizeScale: scale,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlertsCard({
+    required String title,
+    required List<NotificationModel> notifications,
+    IconData? leadingIcon,
+  }) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        scaled(18),
+        scaled(7),
+        scaled(17),
+        scaled(16),
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(scaled(18)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x23000000),
+            blurRadius: scaled(14),
+            offset: Offset(0, scaled(7)),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: scaled(26),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    textDirection: TextDirection.rtl,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: const Color(0xFF222222),
+                        size: scaled(25),
+                      ),
+                      SizedBox(width: scaled(4)),
+                      Text(
+                        title,
+                        textAlign: TextAlign.right,
+                        textDirection: TextDirection.rtl,
+                        style: GoogleFonts.cairo(
+                          fontSize: scaled(18),
+                          height: 1.1,
+                          fontWeight: FontWeight.w800,
+                          color: _textBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (leadingIcon != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Icon(
+                      leadingIcon,
+                      color: _navPurple,
+                      size: scaled(25),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: scaled(8)),
+          _buildTimeline(notifications),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeline(List<NotificationModel> notifications) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    if (notifications.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: scaled(12)),
+        child: Text(
+          'لا توجد تنبيهات حالياً',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.cairo(
+            fontSize: scaled(13),
+            fontWeight: FontWeight.w700,
+            color: _textBlue.withValues(alpha: 0.72),
+          ),
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        Positioned(
+          top: scaled(10),
+          bottom: scaled(12),
+          right: scaled(3),
+          child: Container(
+            width: scaled(1.6),
+            color: _textBlue,
+          ),
+        ),
+        Column(
+          children: List.generate(
+            notifications.length,
+            (index) {
+              final notification = notifications[index];
+              final isLast = index == notifications.length - 1;
+
+              return Padding(
+                padding: EdgeInsets.only(bottom: isLast ? 0 : scaled(13)),
+                child: Row(
+                  textDirection: TextDirection.rtl,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: scaled(20),
+                      height: scaled(29),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: scaled(6)),
+                          child: Container(
+                            width: scaled(10),
+                            height: scaled(10),
+                            decoration: BoxDecoration(
+                              color: _dotColor(notification.iconColor),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                SlideTransition(
-                  position: _slideAnimation,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: _buildBottomNavBar(),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(NotificationsProvider notificationsProvider) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-          decoration: const BoxDecoration(
-            color: AppColors.registerTitle,
-          ),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // ✅ اسم الأهل ثابت لحد ما يتربط بالداتا بيز
-                Text(
-                  'مروه عبد الرحمن',
-                  style: GoogleFonts.cairo(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-
-                Text(
-                  'تقارير ${widget.child.name}',
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          right: 20,
-          bottom: -24,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xffE5E2E2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  color: Color(0xFF224D67),
-                  size: 26,
-                ),
-              ),
-              if (notificationsProvider.unreadCount > 0)
-                Positioned(
-                  right: 4,
-                  top: 4,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNotificationSection({
-    required String title,
-    String? dateLabel,
-    required bool isExpanded,
-    required List<NotificationModel> notifications,
-    required VoidCallback onToggle,
-  }) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onToggle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (dateLabel != null)
-                  Text(
-                    dateLabel,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF224D67),
-                      letterSpacing: 0.5,
-                    ),
-                  )
-                else
-                  const SizedBox.shrink(),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: const Color(0xFF224D67),
-                      size: 28,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF224D67),
+                    SizedBox(width: scaled(5)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _notificationTextForSelectedChild(
+                              notification.text,
+                            ),
+                            textAlign: TextAlign.right,
+                            textDirection: TextDirection.rtl,
+                            style: GoogleFonts.cairo(
+                              fontSize: scaled(13),
+                              height: 1.2,
+                              fontWeight: FontWeight.w500,
+                              color: _textBlue,
+                            ),
+                          ),
+                          SizedBox(height: scaled(2)),
+                          Text(
+                            notification.time,
+                            textAlign: TextAlign.right,
+                            textDirection: TextDirection.rtl,
+                            style: GoogleFonts.cairo(
+                              fontSize: scaled(11.8),
+                              height: 1.1,
+                              fontWeight: FontWeight.w600,
+                              color: _textBlue,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
-        if (isExpanded) ...[
-          const SizedBox(height: 8),
-          if (notifications.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Text(
-                'لا توجد تنبيهات',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF9E9E9E),
-                ),
-              ),
-            )
-          else
-            Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  right: BorderSide(
-                    color: Color(0xFF224D67),
-                    width: 3,
-                  ),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Column(
-                  children: notifications.map((notification) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildNotificationItem(
-                        notification: notification,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          const SizedBox(height: 8),
-        ],
       ],
     );
   }
 
-  Widget _buildNotificationItem({
-    required NotificationModel notification,
-  }) {
-    IconData iconData;
-    switch (notification.icon) {
-      case 'warning':
-        iconData = Icons.warning;
-        break;
-      case 'check_circle':
-        iconData = Icons.check_circle;
-        break;
-      case 'info':
-        iconData = Icons.info;
-        break;
-      default:
-        iconData = Icons.notifications;
+  String _notificationTextForSelectedChild(String text) {
+    final childName = _selectedChildName;
+    final replacements = <String, String>{
+      'لسلمي': 'لـ $childName',
+      'لسلمى': 'لـ $childName',
+      'لأحمد': 'لـ $childName',
+      'لاحمد': 'لـ $childName',
+      'لـ Donia': 'لـ $childName',
+      'لـ donia': 'لـ $childName',
+      'سلمي': childName,
+      'سلمى': childName,
+      'أحمد': childName,
+      'احمد': childName,
+      'Donia': childName,
+      'donia': childName,
+    };
+
+    var resolvedText = text;
+    for (final entry in replacements.entries) {
+      resolvedText = resolvedText.replaceAll(entry.key, entry.value);
     }
 
-    Color iconColorValue;
-    switch (notification.iconColor) {
-      case 'orange':
-        iconColorValue = Colors.orange;
-        break;
+    return resolvedText;
+  }
+
+  Color _dotColor(String colorName) {
+    switch (colorName.trim().toLowerCase()) {
       case 'green':
-        iconColorValue = Colors.green;
-        break;
+        return _greenDot;
       case 'red':
-        iconColorValue = Colors.red;
-        break;
+        return _redAccent;
+      case 'orange':
+      case 'yellow':
       default:
-        iconColorValue = Colors.grey;
+        return _yellowDot;
     }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              notification.time,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF224D67),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Icon(
-              iconData,
-              size: 22,
-              color: iconColorValue,
-            ),
-          ],
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            notification.text,
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF224D67),
-              height: 1.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    final List<Map<String, dynamic>> navItems = [
-      {'icon': Icons.settings_outlined, 'label': 'الاعدادات'},
-      {'icon': Icons.chat_bubble_outline, 'label': 'شات'},
-      {'icon': Icons.bar_chart_outlined, 'label': 'التقارير'},
-      {'icon': Icons.location_on_outlined, 'label': 'المكان'},
-      {'icon': Icons.home_outlined, 'label': 'الرئيسية'},
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        height: 65,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(navItems.length, (index) {
-            final isActive = _currentNavIndex == index;
-            return GestureDetector(
-              onTap: () => _onNavTap(index),
-              behavior: HitTestBehavior.opaque,
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width / 5,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      navItems[index]['icon'],
-                      color: isActive
-                          ? AppColors.registerTitle
-                          : AppColors.homeNavInactive,
-                      size: 26,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      navItems[index]['label'],
-                      style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w400,
-                        color: isActive
-                            ? AppColors.registerTitle
-                            : AppColors.homeNavInactive,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ),
-      ),
-    );
   }
 }

@@ -4,6 +4,8 @@ class UserModel {
   final String email;
   final String? phone;
   final String? token;
+  final List<String> roles;
+  final String? parentGender;
 
   UserModel({
     required this.id,
@@ -11,6 +13,8 @@ class UserModel {
     required this.email,
     this.phone,
     this.token,
+    this.roles = const [],
+    this.parentGender,
   });
 
   Map<String, dynamic> toJson() {
@@ -20,6 +24,8 @@ class UserModel {
       'email': email,
       'phone': phone,
       'token': token,
+      'roles': roles,
+      'parentGender': parentGender,
     };
   }
 
@@ -30,6 +36,12 @@ class UserModel {
       email: json['email'] as String,
       phone: json['phone'] as String?,
       token: json['token'] as String?,
+      roles: (json['roles'] as List<dynamic>?)
+              ?.map((role) => role.toString())
+              .toList() ??
+          const [],
+      parentGender:
+          json['parentGender'] as String? ?? json['guardianGender'] as String?,
     );
   }
 
@@ -39,6 +51,8 @@ class UserModel {
     String? email,
     String? phone,
     String? token,
+    List<String>? roles,
+    String? parentGender,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -46,6 +60,8 @@ class UserModel {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       token: token ?? this.token,
+      roles: roles ?? this.roles,
+      parentGender: parentGender ?? this.parentGender,
     );
   }
 }
