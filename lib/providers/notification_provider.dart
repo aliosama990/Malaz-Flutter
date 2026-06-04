@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../utils/user_error_messages.dart';
+
 enum NotificationType {
   emergency,
   daily,
@@ -96,6 +98,7 @@ class NotificationsProvider with ChangeNotifier {
   List<NotificationModel> _notifications = [];
   bool _isLoading = false;
   String? _error;
+  String? _dummyDataChildName;
 
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
@@ -136,13 +139,22 @@ class NotificationsProvider with ChangeNotifier {
     return emergencyNotifications.isNotEmpty;
   }
 
+  void ensureDummyDataForChild(String? childName) {
+    final displayChildName = _normalizeChildName(childName);
+    if (_notifications.isEmpty || _dummyDataChildName != displayChildName) {
+      loadDummyData(childName: displayChildName);
+    }
+  }
+
   // Load dummy data (for testing until API is ready)
-  void loadDummyData() {
+  void loadDummyData({String? childName}) {
+    final displayChildName = _normalizeChildName(childName);
+    _dummyDataChildName = displayChildName;
     _notifications = [
       // Emergency notifications
       NotificationModel(
         id: 'emg_1',
-        text: 'اقتربت سلمي من حدود منطقة الامان المخصصه',
+        text: 'اقترب $displayChildName من حدود منطقة الامان المخصصه',
         time: '10:03 ص',
         icon: 'warning',
         iconColor: 'orange',
@@ -151,7 +163,8 @@ class NotificationsProvider with ChangeNotifier {
       ),
       NotificationModel(
         id: 'emg_2',
-        text: 'اقترب ميعاد انتهاء اليوم الدراسي لسلمي يرجى المتي لمصاحبتها',
+        text:
+            'اقترب ميعاد انتهاء اليوم الدراسي لـ $displayChildName يرجى المتابعة لمصاحبته',
         time: '11:45 ص',
         icon: 'warning',
         iconColor: 'orange',
@@ -162,7 +175,7 @@ class NotificationsProvider with ChangeNotifier {
       // Daily notifications
       NotificationModel(
         id: 'daily_1',
-        text: 'احمد وصل المدرسه بأمان',
+        text: '$displayChildName وصل المدرسه بأمان',
         time: '8:30 ص',
         icon: 'check_circle',
         iconColor: 'green',
@@ -171,7 +184,7 @@ class NotificationsProvider with ChangeNotifier {
       ),
       NotificationModel(
         id: 'daily_2',
-        text: 'سلمي وصلت المدرسه بأمان',
+        text: '$displayChildName وصل المدرسه بأمان',
         time: '8:30 ص',
         icon: 'check_circle',
         iconColor: 'green',
@@ -180,7 +193,7 @@ class NotificationsProvider with ChangeNotifier {
       ),
       NotificationModel(
         id: 'daily_3',
-        text: 'اقتربت سلمي من حدود منطقة الامان المخصصه',
+        text: 'اقترب $displayChildName من حدود منطقة الامان المخصصه',
         time: '10:03 ص',
         icon: 'warning',
         iconColor: 'orange',
@@ -189,7 +202,7 @@ class NotificationsProvider with ChangeNotifier {
       ),
       NotificationModel(
         id: 'daily_4',
-        text: 'الان سلمي داخل منطقة امان',
+        text: 'الان $displayChildName داخل منطقة امان',
         time: '10:35 ص',
         icon: 'check_circle',
         iconColor: 'green',
@@ -198,7 +211,8 @@ class NotificationsProvider with ChangeNotifier {
       ),
       NotificationModel(
         id: 'daily_5',
-        text: 'اقترب ميعاد انتهاء اليوم الدراسي لسلمي يرجى المتي لمصاحبتها',
+        text:
+            'اقترب ميعاد انتهاء اليوم الدراسي لـ $displayChildName يرجى المتابعة لمصاحبته',
         time: '11:45 ص',
         icon: 'info',
         iconColor: 'orange',
@@ -207,7 +221,7 @@ class NotificationsProvider with ChangeNotifier {
       ),
       NotificationModel(
         id: 'daily_6',
-        text: 'فرح احمد في ميعاد انتهاء اليوم الدراسي',
+        text: '$displayChildName في ميعاد انتهاء اليوم الدراسي',
         time: '2:00 م',
         icon: 'check_circle',
         iconColor: 'green',
@@ -219,7 +233,7 @@ class NotificationsProvider with ChangeNotifier {
   }
 
   // Fetch notifications from API
-  Future<void> fetchNotifications() async {
+  Future<void> fetchNotifications({String? childName}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -231,12 +245,12 @@ class NotificationsProvider with ChangeNotifier {
 
       // For now, load dummy data
       await Future.delayed(const Duration(seconds: 1)); // Simulate API delay
-      loadDummyData();
+      loadDummyData(childName: childName);
 
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      _error = UserErrorMessages.sanitize(e.toString());
       _isLoading = false;
       notifyListeners();
     }
@@ -254,7 +268,7 @@ class NotificationsProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      _error = e.toString();
+      _error = UserErrorMessages.sanitize(e.toString());
       notifyListeners();
     }
   }
@@ -269,7 +283,7 @@ class NotificationsProvider with ChangeNotifier {
           _notifications.map((n) => n.copyWith(isRead: true)).toList();
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      _error = UserErrorMessages.sanitize(e.toString());
       notifyListeners();
     }
   }
@@ -282,6 +296,7 @@ class NotificationsProvider with ChangeNotifier {
 
   // Clear all notifications
   void clearNotifications() {
+    _dummyDataChildName = null;
     _notifications.clear();
     notifyListeners();
   }
@@ -295,7 +310,7 @@ class NotificationsProvider with ChangeNotifier {
       _notifications.removeWhere((n) => n.id == notificationId);
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      _error = UserErrorMessages.sanitize(e.toString());
       notifyListeners();
     }
   }
@@ -303,5 +318,14 @@ class NotificationsProvider with ChangeNotifier {
   // Refresh notifications
   Future<void> refreshNotifications() async {
     await fetchNotifications();
+  }
+
+  String _normalizeChildName(String? childName) {
+    final normalizedName = childName?.trim();
+    if (normalizedName == null || normalizedName.isEmpty) {
+      return 'طفلك';
+    }
+
+    return normalizedName;
   }
 }

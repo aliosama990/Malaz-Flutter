@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:malaz_app/helpers/shared_prefs.dart';
+import 'package:malaz_app/screens/home_screen.dart';
+import 'package:malaz_app/screens/login_screen.dart';
 import 'package:malaz_app/screens/onboarding_screen_2.dart';
-import '../constants/app_colors.dart';
+import 'package:malaz_app/widgets/onboarding_progress_button.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_images.dart';
 
 class OnboardingScreen1 extends StatefulWidget {
-  const OnboardingScreen1({Key? key}) : super(key: key);
+  const OnboardingScreen1({super.key});
 
   @override
   State<OnboardingScreen1> createState() => _OnboardingScreen1State();
@@ -14,6 +17,12 @@ class OnboardingScreen1 extends StatefulWidget {
 
 class _OnboardingScreen1State extends State<OnboardingScreen1>
     with TickerProviderStateMixin {
+  static const Color _backgroundTop = Color(0xFFFFFFFF);
+  static const Color _backgroundBottom = Color(0xFFF6F8FC);
+  static const Color _skipColor = Color(0xFF6A6898);
+  static const Color _titleColor = Color(0xFF355C80);
+  static const Color _descriptionColor = Color(0xFF2474BA);
+
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -57,6 +66,9 @@ class _OnboardingScreen1State extends State<OnboardingScreen1>
     );
 
     _controller.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _redirectIfLoggedIn();
+    });
   }
 
   @override
@@ -66,8 +78,33 @@ class _OnboardingScreen1State extends State<OnboardingScreen1>
     super.dispose();
   }
 
+  void _redirectIfLoggedIn() {
+    if (!mounted || !SharedPrefs.isLoggedIn) {
+      return;
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final widthScale = (screenSize.width / 393).clamp(0.88, 1.0).toDouble();
+    final heightScale = (screenSize.height / 852).clamp(0.82, 1.0).toDouble();
+    final scale = widthScale < heightScale ? widthScale : heightScale;
+    final isCompact = screenSize.height < 780;
+    double scaled(double value) => value * scale;
+
+    final imageHeight = scaled(isCompact ? 238.0 : 270.0);
+    final titleFontSize = scaled(isCompact ? 27.0 : 29.0);
+    final descriptionFontSize = scaled(isCompact ? 15.5 : 17.0);
+    final skipFontSize = scaled(isCompact ? 20.0 : 22.0);
+    final buttonSize = scaled(56.0);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -75,71 +112,112 @@ class _OnboardingScreen1State extends State<OnboardingScreen1>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.onboardingGradientStart,
-              AppColors.onboardingGradientEnd,
+              _backgroundTop,
+              _backgroundBottom,
             ],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              scaled(24),
+              scaled(8),
+              scaled(24),
+              scaled(28),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
+                    },
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Text(
+                        AppStrings.skip,
+                        textDirection: TextDirection.rtl,
+                        style: GoogleFonts.cairo(
+                          fontSize: skipFontSize,
+                          fontWeight: FontWeight.w600,
+                          color: _skipColor,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Spacer(flex: 2),
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: SlideTransition(
                           position: _slideAnimation,
-                          child: Image.asset(
-                            AppImages.onboarding1,
-                            height: 300,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position: _slideAnimation,
-                          child: ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
-                              colors: [
-                                AppColors.onboardingTitleGradientStart,
-                                AppColors.onboardingTitleGradientEnd,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ).createShader(bounds),
-                            child: Text(
-                              AppStrings.onboarding1Title,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.cairo(
-                                fontSize: 27,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                height: 1.4,
+                          child: Transform.translate(
+                            offset: Offset(0, scaled(isCompact ? 0 : -8)),
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: imageHeight,
+                              child: Image.asset(
+                                AppImages.onboarding1,
+                                fit: BoxFit.contain,
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 17),
+                      SizedBox(height: scaled(isCompact ? 36 : 50)),
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: SlideTransition(
                           position: _slideAnimation,
-                          child: Text(
-                            AppStrings.onboarding1Desc,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.cairo(
-                              fontSize: 19,
-                              color: AppColors.onboardingDescription,
-                              height: 1.6,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints:
+                                  BoxConstraints(maxWidth: scaled(330)),
+                              child: Text(
+                                AppStrings.onboarding1Title,
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.cairo(
+                                  fontSize: titleFontSize,
+                                  fontWeight: FontWeight.w700,
+                                  color: _titleColor,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: scaled(isCompact ? 16 : 20)),
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints:
+                                  BoxConstraints(maxWidth: scaled(335)),
+                              child: Text(
+                                AppStrings.onboarding1Desc,
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.cairo(
+                                  fontSize: descriptionFontSize,
+                                  color: _descriptionColor,
+                                  height: 1.55,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -148,14 +226,7 @@ class _OnboardingScreen1State extends State<OnboardingScreen1>
                     ],
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 24.0,
-                  right: 24.0,
-                  bottom: 70.0,
-                ),
-                child: Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: GestureDetector(
                     onTap: () {
@@ -170,27 +241,15 @@ class _OnboardingScreen1State extends State<OnboardingScreen1>
                       opacity: _fadeAnimation,
                       child: SlideTransition(
                         position: _arrowSlideAnimation,
-                        child: ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [
-                              AppColors.onboardingTitleGradientStart,
-                              AppColors.onboardingTitleGradientEnd,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ).createShader(bounds),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                            size: 50,
-                          ),
+                        child: OnboardingBackButton(
+                          size: buttonSize,
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

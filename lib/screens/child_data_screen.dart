@@ -1,270 +1,711 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../constants/app_colors.dart';
-import '../providers/child_provider.dart';
+
+import '../constants/app_strings.dart';
 import '../models/child_mode.dart';
-import 'child_details_screen.dart';
+import '../providers/child_provider.dart';
+import 'notification_setting_screen.dart';
 
 class ChildDataSettingsScreen extends StatefulWidget {
-  // ✅ استقبل الطفل اللي هتعدل عليه
-  final ChildModel child;
+  const ChildDataSettingsScreen({
+    super.key,
+    required this.child,
+    this.popWithResult = false,
+  });
 
-  const ChildDataSettingsScreen({Key? key, required this.child})
-      : super(key: key);
+  final ChildModel child;
+  final bool popWithResult;
 
   @override
   State<ChildDataSettingsScreen> createState() =>
       _ChildDataSettingsScreenState();
 }
 
-class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen> {
-  final _nameController = TextEditingController();
-  String? _selectedYear;
+class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen>
+    with TickerProviderStateMixin {
+  static const List<String> _calendarMonthLabels = <String>[
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  static const List<String> _calendarWeekdayLabels = <String>[
+    'Su',
+    'Mo',
+    'Tu',
+    'We',
+    'Th',
+    'Fr',
+    'Sa',
+  ];
+
+  static const Color _screenBackground = Color(0xFFFDFDFF);
+  static const Color _headerStart = Color(0xFFCCD1F0);
+  static const Color _headerEnd = Color(0xFFC1C6E8);
+  static const Color _cardBackground = Color(0xFFC5C8EE);
+  static const Color _primaryTextColor = Color(0xFF355D84);
+  static const Color _fieldBorderColor = Color(0xFF345D86);
+  static const Color _primaryButtonColor = Color(0xFF6C6CA8);
+
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _deviceIdController = TextEditingController();
+
+  int _gender = 0;
+  ChildCondition? _selectedCondition;
   String? _selectedMonth;
   String? _selectedDay;
-  String _gender = 'ذكر';
-  final _deviceController = TextEditingController();
+  String? _selectedYear;
+  bool _showBirthDateError = false;
+  bool _showConditionError = false;
 
-  final List<String> _years =
-      List.generate(30, (i) => (DateTime.now().year - i).toString());
-  final List<String> _months =
-      List.generate(12, (i) => (i + 1).toString().padLeft(2, '0'));
-  final List<String> _days =
-      List.generate(31, (i) => (i + 1).toString().padLeft(2, '0'));
+  late final AnimationController _fadeController;
+  late final AnimationController _slideController;
+  late final AnimationController _logoController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _logoFadeAnimation;
+  late final Animation<Offset> _logoSlideAnimation;
 
   @override
   void initState() {
     super.initState();
+
     final child = widget.child;
     _nameController.text = child.name;
-    _deviceController.text = child.deviceId;
+    _deviceIdController.text = child.deviceId;
     _gender = child.gender;
+    _selectedCondition = child.condition;
 
-    try {
-      final parts = child.birthDate.split('-');
-      if (parts.length == 3) {
-        _selectedYear = parts[0];
-        _selectedMonth = parts[1];
-        _selectedDay = parts[2];
-      }
-    } catch (_) {}
+    final parts = child.birthDate.split('-');
+    if (parts.length == 3) {
+      _selectedYear = parts[0];
+      _selectedMonth = parts[1];
+      _selectedDay = parts[2];
+    }
+
+    _logoController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    _logoFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeIn),
+    );
+    _logoSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.22),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeOutCubic),
+    );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.18),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
+
+    _logoController.forward();
+    Future.delayed(const Duration(milliseconds: 140), _fadeController.forward);
+    Future.delayed(
+      const Duration(milliseconds: 180),
+      _slideController.forward,
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _deviceController.dispose();
+    _deviceIdController.dispose();
+    _fadeController.dispose();
+    _slideController.dispose();
+    _logoController.dispose();
     super.dispose();
+  }
+
+  double _screenScale(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final widthScale = (screenSize.width / 393).clamp(0.88, 1.0).toDouble();
+    final heightScale = (screenSize.height / 852).clamp(0.82, 1.0).toDouble();
+    return widthScale < heightScale ? widthScale : heightScale;
+  }
+
+  List<String> get _yearOptions => List<String>.generate(
+        80,
+        (index) => (DateTime.now().year - index).toString(),
+      );
+
+  DateTime? get _selectedBirthDateValue {
+    final selectedYear = int.tryParse(_selectedYear ?? '');
+    final selectedMonth = int.tryParse(_selectedMonth ?? '');
+    final selectedDay = int.tryParse(_selectedDay ?? '');
+
+    if (selectedYear == null || selectedMonth == null || selectedDay == null) {
+      return null;
+    }
+
+    final candidate = DateTime(selectedYear, selectedMonth, selectedDay);
+    if (candidate.year != selectedYear ||
+        candidate.month != selectedMonth ||
+        candidate.day != selectedDay) {
+      return null;
+    }
+
+    return candidate;
+  }
+
+  String get _birthDateDisplayText {
+    final selectedDate = _selectedBirthDateValue;
+    if (selectedDate == null) {
+      return 'اختر تاريخ الميلاد';
+    }
+
+    final day = selectedDate.day.toString().padLeft(2, '0');
+    final month = selectedDate.month.toString().padLeft(2, '0');
+    final year = selectedDate.year.toString();
+    return '$day / $month / $year';
+  }
+
+  String? _getBirthDate() {
+    if (_selectedYear != null &&
+        _selectedMonth != null &&
+        _selectedDay != null) {
+      return '$_selectedYear-${_selectedMonth!.padLeft(2, '0')}-${_selectedDay!.padLeft(2, '0')}';
+    }
+    return null;
+  }
+
+  void _applyBirthDate(DateTime date) {
+    _selectedYear = date.year.toString();
+    _selectedMonth = date.month.toString().padLeft(2, '0');
+    _selectedDay = date.day.toString().padLeft(2, '0');
+    _showBirthDateError = false;
+  }
+
+  Future<void> _openBirthDatePicker() async {
+    final years =
+        _yearOptions.map((year) => int.parse(year)).toList(growable: false);
+    final selectedDate = await showGeneralDialog<DateTime>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'birth_date_picker',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRect(
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(
+                            sigmaX: 14,
+                            sigmaY: 14,
+                          ),
+                          child: const SizedBox.expand(),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.09),
+                              const Color(0xFFE8E6FA).withValues(alpha: 0.16),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Center(
+                child: _BirthDatePickerDialog(
+                  initialDate: _selectedBirthDateValue,
+                  firstYear: years.last,
+                  lastYear: years.first,
+                  monthLabels: _calendarMonthLabels,
+                  weekdayLabels: _calendarWeekdayLabels,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        return FadeTransition(
+          opacity: curvedAnimation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.94, end: 1).animate(
+              curvedAnimation,
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+
+    if (selectedDate == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _applyBirthDate(selectedDate);
+    });
+  }
+
+  Future<void> _handleSave() async {
+    final formIsValid = _formKey.currentState!.validate();
+    final birthDate = _getBirthDate();
+    final selectedCondition = _selectedCondition;
+
+    setState(() {
+      _showBirthDateError = birthDate == null;
+      _showConditionError = selectedCondition == null;
+    });
+
+    if (!formIsValid || birthDate == null || selectedCondition == null) {
+      return;
+    }
+
+    final provider = context.read<ChildProvider>();
+    final updatedChild = await provider.updateChildDetails(
+      childId: widget.child.id,
+      name: _nameController.text.trim(),
+      birthDate: birthDate,
+      gender: _gender,
+      deviceId: _deviceIdController.text.trim(),
+      condition: selectedCondition,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (updatedChild == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            provider.errorMessage ?? 'حدث خطأ أثناء تحديث بيانات الطفل',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NotificationSettingScreen(child: updatedChild),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Text(
-                    'اعدادات البيانات',
-                    style: GoogleFonts.cairo(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.registerTitle,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_forward,
-                        color: AppColors.registerTitle,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 40),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 28),
-                        decoration: BoxDecoration(
-                          color: AppColors.registerTitle,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+      backgroundColor: _screenBackground,
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Consumer<ChildProvider>(
+          builder: (context, childProvider, _) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildBlurredHeader(),
+                    Transform.translate(
+                      offset: Offset(0, scaled(-20)),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: scaled(14)),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _buildLabel('اسم الطفل'),
-                            _buildTextField(
-                              controller: _nameController,
-                              hint: 'محمود محمد',
-                              icon: Icons.person_outline,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildLabel('تاريخ الميلاد'),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildDropdown(
-                                    hint: 'MM',
-                                    value: _selectedMonth,
-                                    items: _months,
-                                    onChanged: (v) =>
-                                        setState(() => _selectedMonth = v),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _buildDropdown(
-                                    hint: 'DD',
-                                    value: _selectedDay,
-                                    items: _days,
-                                    onChanged: (v) =>
-                                        setState(() => _selectedDay = v),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _buildDropdown(
-                                    hint: 'YYYY',
-                                    value: _selectedYear,
-                                    items: _years,
-                                    onChanged: (v) =>
-                                        setState(() => _selectedYear = v),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            _buildLabel('النوع'),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text('انثى',
-                                        style: GoogleFonts.cairo(
-                                            color: Colors.white)),
-                                    Radio<String>(
-                                      value: 'انثى',
-                                      groupValue: _gender,
-                                      onChanged: (v) =>
-                                          setState(() => _gender = v!),
-                                      activeColor: Colors.white,
-                                      fillColor: MaterialStateProperty.all(
-                                          Colors.white),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  children: [
-                                    Text('ذكر',
-                                        style: GoogleFonts.cairo(
-                                            color: Colors.white)),
-                                    Radio<String>(
-                                      value: 'ذكر',
-                                      groupValue: _gender,
-                                      onChanged: (v) =>
-                                          setState(() => _gender = v!),
-                                      activeColor: Colors.white,
-                                      fillColor: MaterialStateProperty.all(
-                                          Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            _buildLabel('ربط الجهاز'),
-                            _buildTextField(
-                              controller: _deviceController,
-                              hint: 'الرقم التسلسلي',
-                              icon: null,
-                            ),
-                            const SizedBox(height: 32),
-                            Center(
-                              child: GestureDetector(
-                                onTap: () {
-                                  final childProvider =
-                                      Provider.of<ChildProvider>(context,
-                                          listen: false);
-
-                                  // ✅ احتفظ بنفس الـ id بتاع الطفل الصح
-                                  final updatedChild = ChildModel(
-                                    id: widget.child.id,
-                                    name: _nameController.text.isNotEmpty
-                                        ? _nameController.text
-                                        : widget.child.name,
-                                    birthDate:
-                                        '${_selectedYear ?? widget.child.birthDate.split('-')[0]}-'
-                                        '${_selectedMonth ?? widget.child.birthDate.split('-')[1]}-'
-                                        '${_selectedDay ?? widget.child.birthDate.split('-')[2]}',
-                                    gender: _gender,
-                                    deviceId: _deviceController.text.isNotEmpty
-                                        ? _deviceController.text
-                                        : widget.child.deviceId,
-                                    userId: widget.child.userId,
-                                  );
-
-                                  childProvider.updateChild(updatedChild);
-
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ChildDetailsScreen(
-                                          child: updatedChild),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  width: 130,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(30),
-                                    border: Border.all(
-                                        color: Colors.white, width: 1.5),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'تم',
-                                      style: GoogleFonts.cairo(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            _buildMainCard(),
+                            SizedBox(height: scaled(28)),
+                            _buildPrimaryButton(childProvider),
+                            SizedBox(height: scaled(16)),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 60),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBlurredHeader() {
+    return FadeTransition(
+      opacity: _logoFadeAnimation,
+      child: SlideTransition(
+        position: _logoSlideAnimation,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final scale = _screenScale(context);
+            double scaled(double value) => value * scale;
+            final topPadding = MediaQuery.paddingOf(context).top;
+            final headerHeight = topPadding + scaled(176);
+
+            return SizedBox(
+              height: headerHeight,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(scaled(32)),
+                  bottomRight: Radius.circular(scaled(32)),
+                ),
+                child: Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [_headerStart, _headerEnd],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: scaled(70),
+                      top: topPadding + scaled(82),
+                      child: _buildHeaderBlurBlob(
+                        size: scaled(34),
+                        color: const Color(0xFFFF6C75),
+                        blur: scaled(16),
+                        opacity: 0.70,
+                      ),
+                    ),
+                    Positioned(
+                      left: scaled(28),
+                      top: topPadding + scaled(74),
+                      child: _buildHeaderBlurBlob(
+                        size: scaled(92),
+                        color: Colors.white,
+                        blur: scaled(20),
+                        opacity: 0.22,
+                      ),
+                    ),
+                    Positioned(
+                      right: scaled(48),
+                      top: topPadding + scaled(64),
+                      child: _buildHeaderBlurBlob(
+                        size: scaled(52),
+                        color: const Color(0xFFE7D6C5),
+                        blur: scaled(18),
+                        opacity: 0.50,
+                      ),
+                    ),
+                    Positioned(
+                      right: scaled(102),
+                      top: topPadding + scaled(22),
+                      child: _buildHeaderBlurBlob(
+                        size: scaled(22),
+                        color: const Color(0xFF5E5A73),
+                        blur: scaled(10),
+                        opacity: 0.42,
+                      ),
+                    ),
+                    Positioned(
+                      right: scaled(126),
+                      top: topPadding + scaled(10),
+                      child: _buildHeaderBlurBlob(
+                        size: scaled(12),
+                        color: const Color(0xFF646176),
+                        blur: scaled(6),
+                        opacity: 0.46,
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: scaled(-4),
+                      child: ClipRect(
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(
+                            sigmaX: scaled(18),
+                            sigmaY: scaled(18),
+                          ),
+                          child: Container(
+                            height: scaled(58),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.02),
+                                  Colors.white.withValues(alpha: 0.54),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: topPadding + scaled(28),
+                      right: scaled(22),
+                      child: _buildHeaderBackButton(),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderBlurBlob({
+    required double size,
+    required Color color,
+    required double blur,
+    required double opacity,
+  }) {
+    return ImageFiltered(
+      imageFilter: ui.ImageFilter.blur(
+        sigmaX: blur,
+        sigmaY: blur,
+      ),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color.withValues(alpha: opacity),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderBackButton() {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(scaled(24)),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(
+          sigmaX: scaled(12),
+          sigmaY: scaled(12),
+        ),
+        child: Material(
+          color: Colors.white.withValues(alpha: 0.14),
+          child: InkWell(
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: scaled(44),
+              height: scaled(44),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(scaled(24)),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.16),
+                ),
+              ),
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                color: _primaryTextColor,
+                size: scaled(28),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainCard() {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBackground,
+        borderRadius: BorderRadius.circular(scaled(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        scaled(18),
+        scaled(18),
+        scaled(18),
+        scaled(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildTitle(),
+          SizedBox(height: scaled(22)),
+          _buildLabeledTextField(
+            label: 'اسم الطفل',
+            controller: _nameController,
+            hint: 'اسم الطفل',
+            icon: Icons.person_outline_rounded,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return AppStrings.childNameRequired;
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: scaled(16)),
+          _buildBirthDateSection(),
+          SizedBox(height: scaled(18)),
+          _buildGenderSection(),
+          SizedBox(height: scaled(18)),
+          _buildLabeledTextField(
+            label: 'ربط الجهاز',
+            controller: _deviceIdController,
+            hint: 'الرقم التسلسلي',
+            horizontalInset: 18,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return AppStrings.deviceIdRequired;
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: scaled(18)),
+          _buildConditionSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTitle() {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Text(
+        'الاعدادات الرئيسية',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.cairo(
+          fontSize: scaled(24),
+          fontWeight: FontWeight.w800,
+          color: _primaryTextColor,
+          height: 1.18,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabeledTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    IconData? icon,
+    double horizontalInset = 0,
+    String? Function(String?)? validator,
+  }) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionLabel(label),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: scaled(horizontalInset),
+              ),
+              child: _buildShadowedField(
+                child: TextFormField(
+                  controller: controller,
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
+                  style: GoogleFonts.cairo(
+                    fontSize: scaled(14.5),
+                    fontWeight: FontWeight.w600,
+                    color: _primaryTextColor,
                   ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: GoogleFonts.cairo(
+                      fontSize: scaled(14),
+                      color: _primaryTextColor.withValues(alpha: 0.52),
+                    ),
+                    prefixIcon: icon == null
+                        ? null
+                        : Padding(
+                            padding: EdgeInsets.only(
+                              left: scaled(8),
+                              right: scaled(14),
+                            ),
+                            child: Icon(
+                              icon,
+                              color: _primaryTextColor,
+                              size: scaled(24),
+                            ),
+                          ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: scaled(18),
+                      vertical: scaled(12),
+                    ),
+                    errorStyle: GoogleFonts.cairo(fontSize: scaled(11)),
+                  ),
+                  validator: validator,
                 ),
               ),
             ),
@@ -274,78 +715,767 @@ class _ChildDataSettingsScreenState extends State<ChildDataSettingsScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildBirthDateSection() {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionLabel('تاريخ الميلاد'),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: scaled(18)),
+              child: _buildShadowedField(
+                height: 54,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _openBirthDatePicker,
+                    borderRadius: BorderRadius.circular(scaled(22)),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: scaled(12)),
+                      child: Row(
+                        textDirection: TextDirection.rtl,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _birthDateDisplayText,
+                              textAlign: TextAlign.right,
+                              textDirection: TextDirection.rtl,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.cairo(
+                                fontSize: scaled(14.5),
+                                fontWeight: FontWeight.w700,
+                                color: _selectedBirthDateValue == null
+                                    ? _primaryTextColor.withValues(alpha: 0.52)
+                                    : _primaryTextColor,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: scaled(8)),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: _primaryTextColor.withValues(alpha: 0.80),
+                            size: scaled(24),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_showBirthDateError)
+              Padding(
+                padding: EdgeInsets.only(
+                  top: scaled(6),
+                  right: scaled(4),
+                ),
+                child: Text(
+                  AppStrings.birthDateRequired,
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
+                  style: GoogleFonts.cairo(
+                    fontSize: scaled(12),
+                    color: Colors.red[700],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenderSection() {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionLabel('النوع'),
+            Row(
+              textDirection: TextDirection.rtl,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                _buildChoiceOption(
+                  label: AppStrings.addChildGenderMale,
+                  selected: _gender == 0,
+                  onTap: () {
+                    setState(() {
+                      _gender = 0;
+                    });
+                  },
+                ),
+                SizedBox(width: scaled(24)),
+                _buildChoiceOption(
+                  label: AppStrings.addChildGenderFemale,
+                  selected: _gender == 1,
+                  onTap: () {
+                    setState(() {
+                      _gender = 1;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConditionSection() {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionLabel('الحالة الصحية للطفل'),
+            Column(
+              children: [
+                _buildConditionListOption(
+                  label: 'طبيعي',
+                  selected: _selectedCondition == ChildCondition.normal,
+                  onTap: () {
+                    setState(() {
+                      _selectedCondition = ChildCondition.normal;
+                      _showConditionError = false;
+                    });
+                  },
+                ),
+                SizedBox(height: scaled(8)),
+                _buildConditionListOption(
+                  label: 'توحد',
+                  selected: _selectedCondition == ChildCondition.autism,
+                  onTap: () {
+                    setState(() {
+                      _selectedCondition = ChildCondition.autism;
+                      _showConditionError = false;
+                    });
+                  },
+                ),
+                SizedBox(height: scaled(8)),
+                _buildConditionListOption(
+                  label: 'فرط حركة',
+                  selected: _selectedCondition == ChildCondition.adhd,
+                  onTap: () {
+                    setState(() {
+                      _selectedCondition = ChildCondition.adhd;
+                      _showConditionError = false;
+                    });
+                  },
+                ),
+              ],
+            ),
+            if (_showConditionError)
+              Padding(
+                padding: EdgeInsets.only(
+                  top: scaled(8),
+                  right: scaled(4),
+                ),
+                child: Text(
+                  'الحالة الصحية مطلوبة',
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
+                  style: GoogleFonts.cairo(
+                    fontSize: scaled(12),
+                    color: Colors.red[700],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConditionListOption({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+    const conditionAccentColor = Color(0xFF6D6AA9);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(scaled(18)),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            horizontal: scaled(14),
+            vertical: scaled(10),
+          ),
+          decoration: BoxDecoration(
+            color: selected
+                ? conditionAccentColor.withValues(alpha: 0.16)
+                : Colors.white.withValues(alpha: 0.34),
+            borderRadius: BorderRadius.circular(scaled(18)),
+            border: Border.all(
+              color: selected
+                  ? conditionAccentColor
+                  : conditionAccentColor.withValues(alpha: 0.38),
+              width: selected ? scaled(1.6) : scaled(1.1),
+            ),
+          ),
+          child: Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: scaled(22),
+                height: scaled(22),
+                decoration: BoxDecoration(
+                  color: selected ? conditionAccentColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(scaled(7)),
+                  border: Border.all(
+                    color: selected
+                        ? conditionAccentColor
+                        : conditionAccentColor.withValues(alpha: 0.72),
+                    width: scaled(1.5),
+                  ),
+                ),
+                child: selected
+                    ? Icon(
+                        Icons.check_rounded,
+                        size: scaled(16),
+                        color: Colors.white,
+                      )
+                    : null,
+              ),
+              SizedBox(width: scaled(10)),
+              Expanded(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
+                  style: GoogleFonts.cairo(
+                    fontSize: scaled(15),
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                    color: conditionAccentColor,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChoiceOption({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(scaled(24)),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: scaled(2),
+            vertical: scaled(4),
+          ),
+          child: Row(
+            textDirection: TextDirection.rtl,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                textAlign: TextAlign.right,
+                textDirection: TextDirection.rtl,
+                style: GoogleFonts.cairo(
+                  fontSize: scaled(15),
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? _primaryTextColor
+                      : Colors.white.withValues(alpha: 0.92),
+                ),
+              ),
+              SizedBox(width: scaled(8)),
+              Container(
+                width: scaled(18),
+                height: scaled(18),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _fieldBorderColor,
+                    width: scaled(1.8),
+                  ),
+                ),
+                child: selected
+                    ? Center(
+                        child: Container(
+                          width: scaled(10),
+                          height: scaled(10),
+                          decoration: const BoxDecoration(
+                            color: _fieldBorderColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryButton(ChildProvider childProvider) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Center(
+          child: SizedBox(
+            width: scaled(220),
+            child: Container(
+              decoration: BoxDecoration(
+                color: _primaryButtonColor,
+                borderRadius: BorderRadius.circular(scaled(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0x1A4D4A8E),
+                    blurRadius: scaled(18),
+                    offset: Offset(0, scaled(10)),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(scaled(28)),
+                  onTap: childProvider.isLoading ? null : _handleSave,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: scaled(12)),
+                    child: Center(
+                      child: childProvider.isLoading
+                          ? SizedBox(
+                              height: scaled(24),
+                              width: scaled(24),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : Text(
+                              'التالي',
+                              style: GoogleFonts.cairo(
+                                fontSize: scaled(18),
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(right: scaled(4), bottom: scaled(10)),
       child: Text(
-        text,
-        style: GoogleFonts.cairo(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
+        label,
         textAlign: TextAlign.right,
+        textDirection: TextDirection.rtl,
+        style: GoogleFonts.cairo(
+          fontSize: scaled(16),
+          fontWeight: FontWeight.w700,
+          color: _primaryTextColor,
+        ),
       ),
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    IconData? icon,
+  Widget _buildShadowedField({
+    required Widget child,
+    double height = 54,
   }) {
-    return TextFormField(
-      controller: controller,
-      textAlign: TextAlign.right,
-      textDirection: TextDirection.rtl,
-      style: GoogleFonts.cairo(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.cairo(color: Colors.white54),
-        suffixIcon: icon != null ? Icon(icon, color: Colors.white70) : null,
-        filled: true,
-        fillColor: AppColors.registerTitle,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white, width: 2),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-    );
-  }
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
 
-  Widget _buildDropdown({
-    required String hint,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: scaled(height),
+      padding: EdgeInsets.symmetric(horizontal: scaled(14)),
       decoration: BoxDecoration(
-        color: AppColors.registerTitle,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white, width: 1.5),
+        color: Colors.white.withValues(alpha: 0.97),
+        borderRadius: BorderRadius.circular(scaled(20)),
+        border: Border.all(
+          color: _fieldBorderColor,
+          width: scaled(1.6),
+        ),
       ),
-      child: DropdownButton<String>(
-        value: value,
-        hint: Text(hint, style: GoogleFonts.cairo(color: Colors.white54)),
-        isExpanded: true,
-        underline: const SizedBox(),
-        iconEnabledColor: Colors.white,
-        dropdownColor: AppColors.registerTitle,
-        items: items
-            .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e, style: GoogleFonts.cairo(color: Colors.white)),
-                ))
-            .toList(),
-        onChanged: onChanged,
+      child: Center(child: child),
+    );
+  }
+}
+
+class _BirthDatePickerDialog extends StatefulWidget {
+  const _BirthDatePickerDialog({
+    required this.initialDate,
+    required this.firstYear,
+    required this.lastYear,
+    required this.monthLabels,
+    required this.weekdayLabels,
+  });
+
+  final DateTime? initialDate;
+  final int firstYear;
+  final int lastYear;
+  final List<String> monthLabels;
+  final List<String> weekdayLabels;
+
+  @override
+  State<_BirthDatePickerDialog> createState() => _BirthDatePickerDialogState();
+}
+
+class _BirthDatePickerDialogState extends State<_BirthDatePickerDialog> {
+  late DateTime _displayedMonth;
+  late DateTime? _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialDate = widget.initialDate ?? DateTime.now();
+    _displayedMonth = DateTime(initialDate.year, initialDate.month);
+    _selectedDate = widget.initialDate;
+  }
+
+  List<int> get _yearItems => List<int>.generate(
+        widget.lastYear - widget.firstYear + 1,
+        (index) => widget.firstYear + index,
+      );
+
+  List<DateTime> get _calendarDays {
+    final firstDayOfMonth = DateTime(
+      _displayedMonth.year,
+      _displayedMonth.month,
+      1,
+    );
+    final leadingDays = firstDayOfMonth.weekday % 7;
+    final daysInMonth = DateUtils.getDaysInMonth(
+      _displayedMonth.year,
+      _displayedMonth.month,
+    );
+    final totalCells = leadingDays + daysInMonth <= 35 ? 35 : 42;
+    final firstVisibleDay = firstDayOfMonth.subtract(
+      Duration(days: leadingDays),
+    );
+
+    return List<DateTime>.generate(
+      totalCells,
+      (index) => DateTime(
+        firstVisibleDay.year,
+        firstVisibleDay.month,
+        firstVisibleDay.day + index,
+      ),
+    );
+  }
+
+  void _changeMonth(int offset) {
+    final candidate = DateTime(
+      _displayedMonth.year,
+      _displayedMonth.month + offset,
+    );
+
+    if (candidate.year < widget.firstYear || candidate.year > widget.lastYear) {
+      return;
+    }
+
+    setState(() {
+      _displayedMonth = DateTime(candidate.year, candidate.month);
+    });
+  }
+
+  void _selectDate(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+      _displayedMonth = DateTime(date.year, date.month);
+    });
+
+    Navigator.of(context).pop(date);
+  }
+
+  double _screenScale(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final widthScale = (screenSize.width / 393).clamp(0.88, 1.0).toDouble();
+    final heightScale = (screenSize.height / 852).clamp(0.82, 1.0).toDouble();
+    return widthScale < heightScale ? widthScale : heightScale;
+  }
+
+  Widget _buildTopSelector<T>({
+    required T value,
+    required List<T> items,
+    required String Function(T item) labelBuilder,
+    required ValueChanged<T?> onChanged,
+    double width = 84,
+  }) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return Container(
+      width: scaled(width),
+      height: scaled(38),
+      padding: EdgeInsets.symmetric(horizontal: scaled(11)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(scaled(11)),
+        border: Border.all(
+          color: const Color(0xFFD6D2D2),
+          width: scaled(0.9),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: scaled(20),
+            color: const Color(0xFF3C3C40),
+          ),
+          dropdownColor: Colors.white,
+          style: GoogleFonts.cairo(
+            fontSize: scaled(16),
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF303035),
+          ),
+          items: items
+              .map(
+                (item) => DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(
+                    labelBuilder(item),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.cairo(
+                      fontSize: scaled(16),
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF303035),
+                    ),
+                  ),
+                ),
+              )
+              .toList(growable: false),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(scaled(18)),
+      child: SizedBox(
+        width: scaled(34),
+        height: scaled(34),
+        child: Icon(
+          icon,
+          size: scaled(24),
+          color: const Color(0xFF26262A),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+    final dialogWidth = (MediaQuery.sizeOf(context).width - scaled(52))
+        .clamp(scaled(302), scaled(338))
+        .toDouble();
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        width: dialogWidth,
+        padding: EdgeInsets.fromLTRB(
+          scaled(20),
+          scaled(18),
+          scaled(20),
+          scaled(18),
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.97),
+          borderRadius: BorderRadius.circular(scaled(20)),
+          border: Border.all(
+            color: const Color(0xFFD9D6D2),
+            width: scaled(0.95),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x12000000),
+              blurRadius: scaled(26),
+              offset: Offset(0, scaled(12)),
+            ),
+          ],
+        ),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  _buildNavButton(
+                    icon: Icons.chevron_left_rounded,
+                    onTap: () => _changeMonth(-1),
+                  ),
+                  SizedBox(width: scaled(10)),
+                  _buildTopSelector<int>(
+                    value: _displayedMonth.month,
+                    items: List<int>.generate(12, (index) => index + 1),
+                    labelBuilder: (month) => widget.monthLabels[month - 1],
+                    onChanged: (month) {
+                      if (month == null) {
+                        return;
+                      }
+                      setState(() {
+                        _displayedMonth = DateTime(_displayedMonth.year, month);
+                      });
+                    },
+                    width: 96,
+                  ),
+                  SizedBox(width: scaled(10)),
+                  _buildTopSelector<int>(
+                    value: _displayedMonth.year,
+                    items: _yearItems,
+                    labelBuilder: (year) => year.toString(),
+                    onChanged: (year) {
+                      if (year == null) {
+                        return;
+                      }
+                      setState(() {
+                        _displayedMonth = DateTime(year, _displayedMonth.month);
+                      });
+                    },
+                    width: 84,
+                  ),
+                  const Spacer(),
+                  _buildNavButton(
+                    icon: Icons.chevron_right_rounded,
+                    onTap: () => _changeMonth(1),
+                  ),
+                ],
+              ),
+              SizedBox(height: scaled(18)),
+              Row(
+                children: widget.weekdayLabels
+                    .map(
+                      (label) => Expanded(
+                        child: Center(
+                          child: Text(
+                            label,
+                            style: GoogleFonts.cairo(
+                              fontSize: scaled(12),
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF8A8A90),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              SizedBox(height: scaled(12)),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _calendarDays.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: scaled(6),
+                  crossAxisSpacing: scaled(6),
+                  childAspectRatio: 1,
+                ),
+                itemBuilder: (context, index) {
+                  final day = _calendarDays[index];
+                  final isCurrentMonth = day.month == _displayedMonth.month;
+                  final isSelected = _selectedDate != null &&
+                      DateUtils.isSameDay(day, _selectedDate);
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _selectDate(day),
+                      borderRadius: BorderRadius.circular(scaled(10)),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 140),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF3C3C3F)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(scaled(10)),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${day.day}',
+                          style: GoogleFonts.cairo(
+                            fontSize: scaled(20),
+                            fontWeight:
+                                isSelected ? FontWeight.w700 : FontWeight.w600,
+                            color: isSelected
+                                ? Colors.white
+                                : isCurrentMonth
+                                    ? const Color(0xFF36363B)
+                                    : const Color(0xFFC8C8CD),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -8,10 +8,20 @@ import 'add_child_screen.dart';
 import 'child_details_screen.dart';
 
 class ChildrenScreen extends StatelessWidget {
-  const ChildrenScreen({Key? key}) : super(key: key);
+  const ChildrenScreen({super.key});
+
+  double _screenScale(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final widthScale = (screenSize.width / 393).clamp(0.88, 1.0).toDouble();
+    final heightScale = (screenSize.height / 852).clamp(0.82, 1.0).toDouble();
+    return widthScale < heightScale ? widthScale : heightScale;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,15 +32,17 @@ class ChildrenScreen extends StatelessWidget {
             return Column(
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: scaled(20),
+                    vertical: scaled(16),
+                  ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Text(
                         'اضف / اختر طفل',
                         style: GoogleFonts.cairo(
-                          fontSize: 20,
+                          fontSize: scaled(20),
                           fontWeight: FontWeight.bold,
                           color: AppColors.registerTitle,
                         ),
@@ -39,36 +51,36 @@ class ChildrenScreen extends StatelessWidget {
                         alignment: Alignment.centerRight,
                         child: IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.arrow_forward,
                             color: AppColors.registerTitle,
-                            size: 28,
+                            size: scaled(28),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: scaled(20)),
                 Expanded(
                   child: children.isEmpty
                       ? Center(
                           child: Text(
                             'لا يوجد أطفال مسجلين',
                             style: GoogleFonts.cairo(
-                              fontSize: 16,
+                              fontSize: scaled(16),
                               color: Colors.grey,
                             ),
                           ),
                         )
                       : Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: EdgeInsets.symmetric(horizontal: scaled(24)),
                           child: Align(
                             alignment: Alignment.topRight,
                             child: Wrap(
                               alignment: WrapAlignment.end,
-                              spacing: 16,
-                              runSpacing: 16,
+                              spacing: scaled(16),
+                              runSpacing: scaled(16),
                               children: children
                                   .map((child) =>
                                       _buildChildCard(context, child))
@@ -78,7 +90,7 @@ class ChildrenScreen extends StatelessWidget {
                         ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(scaled(20)),
                   child: GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -91,15 +103,16 @@ class ChildrenScreen extends StatelessWidget {
                     },
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: scaled(16)),
                       decoration: BoxDecoration(
                         color: AppColors.registerTitle,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(scaled(30)),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.registerTitle.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            color:
+                                AppColors.registerTitle.withValues(alpha: 0.3),
+                            blurRadius: scaled(10),
+                            offset: Offset(0, scaled(4)),
                           ),
                         ],
                       ),
@@ -109,13 +122,17 @@ class ChildrenScreen extends StatelessWidget {
                           Text(
                             'اضافة طفل اخر',
                             style: GoogleFonts.cairo(
-                              fontSize: 16,
+                              fontSize: scaled(16),
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.add, color: Colors.white, size: 22),
+                          SizedBox(width: scaled(8)),
+                          Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: scaled(22),
+                          ),
                         ],
                       ),
                     ),
@@ -130,7 +147,10 @@ class ChildrenScreen extends StatelessWidget {
   }
 
   Widget _buildChildCard(BuildContext context, ChildModel child) {
-    final cardWidth = (MediaQuery.of(context).size.width - 64) / 2;
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+    final cardWidth = (MediaQuery.of(context).size.width - scaled(64)) / 2;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -145,12 +165,12 @@ class ChildrenScreen extends StatelessWidget {
         height: cardWidth / 1.4,
         decoration: BoxDecoration(
           color: AppColors.registerTitle,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(scaled(16)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.registerTitle.withOpacity(0.25),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: AppColors.registerTitle.withValues(alpha: 0.25),
+              blurRadius: scaled(8),
+              offset: Offset(0, scaled(4)),
             ),
           ],
         ),
@@ -158,7 +178,7 @@ class ChildrenScreen extends StatelessWidget {
           child: Text(
             child.name,
             style: GoogleFonts.cairo(
-              fontSize: 18,
+              fontSize: scaled(18),
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
