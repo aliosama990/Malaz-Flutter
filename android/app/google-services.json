@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "657086980324",
+    "project_id": "malaz-notification",
+    "storage_bucket": "malaz-notification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:657086980324:android:bc4d5b6b3551e8634e0cf1",
+        "android_client_info": {
+          "package_name": "com.example.malath"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1B71-zm97Zy7YZnr_TbqnaYToXmbzG08"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

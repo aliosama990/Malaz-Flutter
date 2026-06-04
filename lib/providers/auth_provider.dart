@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helpers/shared_prefs.dart';
 import '../models/user_model.dart';
+import '../screens/login_screen.dart';
+import '../services/api_service.dart';
+import '../services/push_notification_service.dart';
+import '../utils/user_error_messages.dart';
 
 class AuthProvider with ChangeNotifier {
+  AuthProvider() {
+    ApiService.onUnauthorized = _handleUnauthorized;
+  }
+
+  final ApiService _apiService = ApiService();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: const <String>['email'],
+  );
+
   UserModel? _user;
   bool _isLoading = false;
   String? _errorMessage;
@@ -13,32 +29,65 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> checkLoginStatus() async {
     try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+      final prefs = await SharedPreferences.getInstance();
+      final isLoggedIn = SharedPrefs.isLoggedIn;
 
       if (isLoggedIn) {
-        String? userId = prefs.getString('userId');
-        String? name = prefs.getString('userName');
-        String? email = prefs.getString('userEmail');
-        String? phone = prefs.getString('userPhone');
-        String? token = prefs.getString('authToken');
+        final userId = SharedPrefs.userId ?? prefs.getString('userId');
+        final name = prefs.getString('userName');
+        final email = prefs.getString('userEmail');
+        final phone = prefs.getString('userPhone');
+        final parentGender = prefs.getString('parentGender');
+        final token = SharedPrefs.authToken;
+        final roles = prefs.getStringList('userRoles') ?? const <String>[];
 
-        if (userId != null && name != null && email != null) {
+        if (userId != null &&
+            name != null &&
+            email != null &&
+            token != null &&
+            token.trim().isNotEmpty) {
           _user = UserModel(
             id: userId,
             name: name,
             email: email,
             phone: phone,
             token: token,
+            roles: roles,
+            parentGender: parentGender,
           );
           notifyListeners();
           return true;
         }
       }
+      await logout();
       return false;
     } catch (e) {
-      print('Error checking login status: $e');
+      debugPrint('Error checking login status: $e');
       return false;
+    }
+  }
+
+  Future<bool> validateStoredToken() async {
+    final hasValidStoredSession = await checkLoginStatus();
+    if (!hasValidStoredSession) {
+      return false;
+    }
+
+    try {
+      await _apiService.get(
+        '/Child/mychildren',
+        handleUnauthorized: false,
+      );
+      return true;
+    } on ApiException catch (error) {
+      if (error.statusCode == 401) {
+        await logout();
+        return false;
+      }
+
+      _errorMessage = _getApiErrorMessage(error);
+      notifyListeners();
+      rethrow;
     }
   }
 
@@ -47,11 +96,15 @@ class AuthProvider with ChangeNotifier {
     required String name,
     required String email,
     required String phone,
+    required String parentGender,
     required String password,
     required String confirmPassword,
   }) async {
-    // Validation
-    if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
+    if (name.isEmpty ||
+        email.isEmpty ||
+        parentGender.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
       _errorMessage = 'جميع الحقول مطلوبة';
       notifyListeners();
       return false;
@@ -80,40 +133,37 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // ✅ هنا هنستبدل ده بـ API Call لما الـ Backend يبقى جاهز
-      // final response = await ApiService.register(name, email, phone, password);
-
-      await Future.delayed(const Duration(seconds: 2)); // محاكاة API Call
-
-      // ✅ محاكاة استجابة ناجحة من الـ Backend
-      String userId = DateTime.now().millisecondsSinceEpoch.toString();
-      String token = 'fake_token_${DateTime.now().millisecondsSinceEpoch}';
-
-      _user = UserModel(
-        id: userId,
-        name: name,
+      await _registerRequest(
+        userName: name,
         email: email,
-        phone: phone,
-        token: token,
+        parentGender: parentGender,
+        password: password,
+        confirmPassword: confirmPassword,
       );
 
-      // ✅ حفظ البيانات في SharedPreferences
-      await _saveUserData(
-        userId: userId,
-        name: name,
-        email: email,
-        phone: phone,
-        token: token,
+      final user = (await _loginRequest(email: email, password: password))
+          .copyWith(parentGender: parentGender);
+
+      _user = user;
+      await _saveUserData(user);
+      debugPrint(
+        '[FCM_DEBUG] AuthProvider register success: before registerDeviceToken()',
+      );
+      await PushNotificationService.registerDeviceToken();
+      debugPrint(
+        '[FCM_DEBUG] AuthProvider register success: after registerDeviceToken()',
       );
 
-      _isLoading = false;
-      notifyListeners();
       return true;
-    } catch (e) {
-      _isLoading = false;
-      _errorMessage = 'حدث خطأ أثناء التسجيل، حاول مرة أخرى';
-      notifyListeners();
+    } on ApiException catch (e) {
+      _errorMessage = _getApiErrorMessage(e);
       return false;
+    } catch (e) {
+      _errorMessage = 'حدث خطأ أثناء التسجيل، حاول مرة أخرى';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -140,86 +190,252 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // ✅ هنا هنستبدل ده بـ API Call لما الـ Backend يبقى جاهز
-      // final response = await ApiService.login(email, password);
+      final user = await _loginRequest(email: email, password: password);
 
-      await Future.delayed(const Duration(seconds: 2));
-
-      String userId = DateTime.now().millisecondsSinceEpoch.toString();
-      String token = 'fake_token_${DateTime.now().millisecondsSinceEpoch}';
-
-      _user = UserModel(
-        id: userId,
-        name: 'محمد أحمد', // هيجي من الـ API
-        email: email,
-        phone: '01234567890', // هيجي من الـ API
-        token: token,
+      _user = user;
+      await _saveUserData(user);
+      debugPrint(
+        '[FCM_DEBUG] AuthProvider login success: before registerDeviceToken()',
+      );
+      await PushNotificationService.registerDeviceToken();
+      debugPrint(
+        '[FCM_DEBUG] AuthProvider login success: after registerDeviceToken()',
       );
 
-      await _saveUserData(
-        userId: userId,
-        name: _user!.name,
-        email: email,
-        phone: _user!.phone,
-        token: token,
-      );
-
-      _isLoading = false;
-      notifyListeners();
       return true;
-    } catch (e) {
-      _isLoading = false;
-      _errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
-      notifyListeners();
+    } on ApiException catch (e) {
+      _errorMessage = _getApiErrorMessage(e);
       return false;
+    } catch (e) {
+      _errorMessage = 'حدث خطأ أثناء تسجيل الدخول، حاول مرة أخرى';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> pickGoogleAccountEmail() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final account = await _googleSignIn.signIn();
+
+      if (account == null) {
+        return null;
+      }
+
+      final selectedEmail = account.email.trim();
+      await _googleSignIn.signOut();
+
+      if (selectedEmail.isEmpty) {
+        _errorMessage = 'تعذر الحصول على البريد الإلكتروني من حساب Google';
+        return null;
+      }
+
+      return selectedEmail;
+    } catch (e) {
+      _errorMessage = 'تعذر اختيار حساب Google حالياً';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> logout() async {
     try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
 
+      await SharedPrefs.logout();
       await prefs.remove('isLoggedIn');
       await prefs.remove('userId');
       await prefs.remove('userName');
       await prefs.remove('userEmail');
       await prefs.remove('userPhone');
+      await prefs.remove('parentGender');
       await prefs.remove('authToken');
+      await prefs.remove('userRoles');
 
       _user = null;
+      _isLoading = false;
       _errorMessage = null;
       notifyListeners();
     } catch (e) {
-      print('Error during logout: $e');
+      debugPrint('Error during logout: $e');
     }
   }
 
-  // ✅ حفظ بيانات المستخدم في SharedPreferences
-  Future<void> _saveUserData({
-    required String userId,
-    required String name,
+  Future<void> _registerRequest({
+    required String userName,
     required String email,
-    required String? phone,
-    required String token,
+    required String parentGender,
+    required String password,
+    required String confirmPassword,
   }) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final response = await _apiService.post(
+      '/Auth/register',
+      body: {
+        'userName': userName,
+        'email': email,
+        'parentGender': parentGender,
+        'password': password,
+        'confirmPassword': confirmPassword,
+      },
+    );
 
-    await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('userId', userId);
-    await prefs.setString('userName', name);
-    await prefs.setString('userEmail', email);
-    if (phone != null) {
-      await prefs.setString('userPhone', phone);
+    final responseBody = _requireMap(response.rawBody);
+    if (!responseBody.containsKey('success')) {
+      throw ApiException(
+        'Unexpected response shape.',
+        statusCode: response.statusCode,
+        responseBody: responseBody,
+      );
     }
-    await prefs.setString('authToken', token);
   }
 
-  // ✅ التحقق من صحة البريد الإلكتروني
+  Future<UserModel> _loginRequest({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _apiService.post(
+      '/Auth/login',
+      body: {
+        'email': email,
+        'password': password,
+      },
+    );
+
+    final responseBody = _requireMap(response.rawBody);
+    final userJson = _requireMap(responseBody['user']);
+    final token = _requireString(responseBody, 'token');
+    final roles = _requireStringList(responseBody['roles']);
+
+    return UserModel(
+      id: _requireString(userJson, 'id'),
+      name: _requireString(userJson, 'name'),
+      email: _requireString(userJson, 'email'),
+      token: token,
+      roles: roles,
+      parentGender: _readOptionalString(userJson, 'parentGender') ??
+          _readOptionalString(userJson, 'guardianGender'),
+    );
+  }
+
+  Future<void> _saveUserData(UserModel user) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await SharedPrefs.setHasRegistered(true);
+    await SharedPrefs.setLoggedIn(true);
+    await SharedPrefs.setUserId(user.id);
+    await SharedPrefs.setAuthToken(user.token ?? '');
+
+    await prefs.setString('userId', user.id);
+    await prefs.setString('userName', user.name);
+    await prefs.setString('userEmail', user.email);
+    if (user.phone != null && user.phone!.trim().isNotEmpty) {
+      await prefs.setString('userPhone', user.phone!);
+    } else {
+      await prefs.remove('userPhone');
+    }
+    if (user.parentGender != null && user.parentGender!.trim().isNotEmpty) {
+      await prefs.setString('parentGender', user.parentGender!);
+    } else {
+      await prefs.remove('parentGender');
+    }
+    if (user.token != null && user.token!.trim().isNotEmpty) {
+      await prefs.setString('authToken', user.token!);
+    } else {
+      await prefs.remove('authToken');
+    }
+    if (user.roles.isNotEmpty) {
+      await prefs.setStringList('userRoles', user.roles);
+    } else {
+      await prefs.remove('userRoles');
+    }
+  }
+
+  Map<String, dynamic> _requireMap(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    throw ApiException(
+      'Unexpected response shape.',
+      responseBody: value,
+    );
+  }
+
+  String _requireString(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is String && value.trim().isNotEmpty) {
+      return value;
+    }
+
+    throw ApiException(
+      'Unexpected response shape.',
+      responseBody: json,
+    );
+  }
+
+  String? _readOptionalString(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is String && value.trim().isNotEmpty) {
+      return value.trim();
+    }
+
+    return null;
+  }
+
+  List<String> _requireStringList(dynamic value) {
+    if (value == null) {
+      return const <String>[];
+    }
+
+    if (value is List) {
+      return value.map((item) => item.toString()).toList(growable: false);
+    }
+
+    throw ApiException(
+      'Unexpected response shape.',
+      responseBody: value,
+    );
+  }
+
+  String _getApiErrorMessage(ApiException error) {
+    return UserErrorMessages.fromApiException(error);
+  }
+
+  Future<void> _handleUnauthorized(ApiException error) async {
+    final errorMessage = _getApiErrorMessage(error);
+
+    await logout();
+
+    _errorMessage = errorMessage;
+    notifyListeners();
+
+    ApiService.scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
+    ApiService.scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text(errorMessage)),
+    );
+
+    final navigatorState = ApiService.navigatorKey.currentState;
+    if (navigatorState == null) {
+      return;
+    }
+
+    navigatorState.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  // ✅ مسح رسالة الخطأ
   void clearError() {
     _errorMessage = null;
     notifyListeners();

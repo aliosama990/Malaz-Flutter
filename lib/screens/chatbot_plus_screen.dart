@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:malaz_app/constants/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_strings.dart';
 
 class ChatbotPlusScreen extends StatefulWidget {
-  const ChatbotPlusScreen({Key? key}) : super(key: key);
+  const ChatbotPlusScreen({super.key});
 
   @override
   State<ChatbotPlusScreen> createState() => _ChatbotPlusScreenState();
@@ -11,6 +11,11 @@ class ChatbotPlusScreen extends StatefulWidget {
 
 class _ChatbotPlusScreenState extends State<ChatbotPlusScreen>
     with SingleTickerProviderStateMixin {
+  static const Color _pageBackground = Color(0xFF686A9F);
+  static const Color _buttonColor = Color(0xFF285A78);
+  static const Color _titleTextColor = Color(0xFF285273);
+  static const Color _borderColor = Color(0xFFD7D8EF);
+
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -45,116 +50,118 @@ class _ChatbotPlusScreenState extends State<ChatbotPlusScreen>
     super.dispose();
   }
 
+  double _screenScale(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final widthScale = (screenSize.width / 393).clamp(0.88, 1.0).toDouble();
+    final heightScale = (screenSize.height / 852).clamp(0.82, 1.0).toDouble();
+    return widthScale < heightScale ? widthScale : heightScale;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.registerTitle,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ),
+      backgroundColor: _pageBackground,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final scale = _screenScale(context);
+              double scaled(double value) => value * scale;
+              final width = constraints.maxWidth;
+              final height = constraints.maxHeight;
 
-                  const SizedBox(height: 40),
-
-                  Center(
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.6,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5A7A8E),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        AppStrings.upgradeToPlusButton,
-                        style: const TextStyle(
+              return Center(
+                child: SizedBox(
+                  width: width,
+                  height: height,
+                  child: Column(
+                    children: [
+                      SizedBox(height: height * 0.158),
+                      Container(
+                        width: width * 0.49,
+                        height: scaled(58),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
                           color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          borderRadius: BorderRadius.circular(scaled(30)),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 70),
-
-                  Center(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2,
+                        child: Text(
+                          AppStrings.upgradeToPlusButton,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.cairo(
+                            color: _titleTextColor,
+                            fontSize: scaled(20),
+                            fontWeight: FontWeight.w500,
+                            height: 1.1,
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _buildFeatureItem(AppStrings.feature1),
-                          const SizedBox(height: 20),
-                          _buildFeatureItem(AppStrings.feature2),
-                          const SizedBox(height: 20),
-                          _buildFeatureItem(AppStrings.feature3),
-                          const SizedBox(height: 20),
-                          _buildFeatureItem(AppStrings.feature4),
-                          const SizedBox(height: 20),
-                          _buildFeatureItem(AppStrings.feature5),
-                        ],
+                      SizedBox(height: height * 0.077),
+                      Container(
+                        width: width * 0.675,
+                        height: height * 0.357,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: scaled(20),
+                          vertical: scaled(24),
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: _borderColor,
+                            width: scaled(2),
+                          ),
+                          borderRadius: BorderRadius.circular(scaled(38)),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildFeatureItem(AppStrings.feature1),
+                            _buildFeatureItem(AppStrings.feature2),
+                            _buildFeatureItem(AppStrings.feature3),
+                            _buildFeatureItem(AppStrings.feature4),
+                            _buildFeatureItem(AppStrings.feature5),
+                          ],
+                        ),
                       ),
-                    ),
+                      SizedBox(height: height * 0.073),
+                      SizedBox(
+                        width: width * 0.30,
+                        height: scaled(52),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            debugPrint('Subscribe Now');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _buttonColor,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(scaled(20)),
+                              side: BorderSide(
+                                color: Colors.white,
+                                width: scaled(1.6),
+                              ),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            AppStrings.upgradeButton,
+                            style: GoogleFonts.cairo(
+                              color: Colors.white,
+                              fontSize: scaled(22),
+                              fontWeight: FontWeight.w500,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-
-                  const Spacer(),
-
-                  ElevatedButton(
-                    onPressed: () {
-                      print('Subscribe Now');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B6B),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 60,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      AppStrings.subscribeNow,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 130),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -162,15 +169,22 @@ class _ChatbotPlusScreenState extends State<ChatbotPlusScreen>
   }
 
   Widget _buildFeatureItem(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        height: 1.5,
+    final scale = _screenScale(context);
+    double scaled(double value) => value * scale;
+
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        text,
+        style: GoogleFonts.cairo(
+          color: Colors.white,
+          fontSize: scaled(16),
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
+        textAlign: TextAlign.center,
+        maxLines: 1,
       ),
-      textAlign: TextAlign.right,
     );
   }
 }

@@ -1,0 +1,898 @@
+{
+  "info": {
+    "_postman_id": "65149e07-7b5f-434d-8303-16f1964457f9",
+    "name": "Malaz",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53161800",
+    "_collection_link": "https://go.postman.co/collection/52179736-65149e07-7b5f-434d-8303-16f1964457f9?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"basmala@gmail.com\",\r\n  \"password\": \"Basmala45@\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://malaz.runasp.net/Auth/login",
+              "protocol": "https",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "Auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"email\": \"basmala@gmail.com\",\r\n  \"password\": \"Basmala45@\"\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://malaz.runasp.net/Auth/login",
+                  "protocol": "https",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "Auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 03 Mar 2026 13:44:31 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"user\": {\n        \"id\": \"c997ea10-a1b9-47a2-9222-b22a5c628ff6\",\n        \"name\": \"Basmala45\",\n        \"email\": \"basmala@gmail.com\",\n        \"success\": false,\n        \"errorMessages\": []\n    },\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjJkNDMxMTY1LTMxMWYtNDYwZi1hMDllLWU0MDBiNzc0MmU5ZSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MDI3MX0.X9yIeOW6ysVoHxDfLhoa8xYdSTHrkaIS--zL48juR40\",\n    \"roles\": [\n        \"Parent\"\n    ],\n    \"errorMessages\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userName\": \"Basmala454\",\r\n  \"email\": \"basmala54@gmail.com\",\r\n  \"password\": \"Basmala454@\",\r\n  \"confirmPassword\": \"Basmala454@\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://malaz.runasp.net/Auth/register",
+              "protocol": "http",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "Auth",
+                "register"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Register",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"userName\": \"Basmala454\",\r\n  \"email\": \"basmala54@gmail.com\",\r\n  \"password\": \"Basmala454@\",\r\n  \"confirmPassword\": \"Basmala454@\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://malaz.runasp.net/Auth/register",
+                  "protocol": "http",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "Auth",
+                    "register"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 03 Mar 2026 13:47:03 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"id\": \"c37e9810-13dc-4c0a-9c23-2ab8d822e30c\",\n    \"name\": \"Basmala454\",\n    \"email\": \"basmala54@gmail.com\",\n    \"success\": true,\n    \"errorMessages\": []\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Parent",
+      "item": [
+        {
+          "name": "AddChild",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjJkNDMxMTY1LTMxMWYtNDYwZi1hMDllLWU0MDBiNzc0MmU5ZSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MDI3MX0.X9yIeOW6ysVoHxDfLhoa8xYdSTHrkaIS--zL48juR40",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"mostafa\",\r\n  \"birthDate\": \"2010-04-10\",\r\n  \"gender\": 0,\r\n  \"deviceId\": \"watch123\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://malaz.runasp.net/Child/addchild",
+              "protocol": "http",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "Child",
+                "addchild"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "AddChild",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"mostafa\",\r\n  \"birthDate\": \"2010-04-10\",\r\n  \"gender\": 0,\r\n  \"deviceId\": \"watch123\"\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://malaz.runasp.net/Child/addchild",
+                  "protocol": "http",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "Child",
+                    "addchild"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 03 Mar 2026 13:51:15 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": {\n        \"id\": \"2e292a81-ece4-456e-a7a8-7d82bc3ba376\",\n        \"name\": \"mostafa\",\n        \"gender\": 0,\n        \"birthDate\": \"2010-04-10T00:00:00\",\n        \"deviceId\": \"watch123\",\n        \"safeZones\": []\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GetMyChildren",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjJkNDMxMTY1LTMxMWYtNDYwZi1hMDllLWU0MDBiNzc0MmU5ZSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MDI3MX0.X9yIeOW6ysVoHxDfLhoa8xYdSTHrkaIS--zL48juR40",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://malaz.runasp.net/Child/mychildren",
+              "protocol": "http",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "Child",
+                "mychildren"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "GetMyChildren",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://malaz.runasp.net/Child/mychildren",
+                  "protocol": "http",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "Child",
+                    "mychildren"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 03 Mar 2026 13:52:29 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": [\n        {\n            \"id\": \"2e292a81-ece4-456e-a7a8-7d82bc3ba376\",\n            \"name\": \"mostafa\",\n            \"gender\": 0,\n            \"birthDate\": \"2010-04-10T00:00:00\",\n            \"deviceId\": \"watch123\",\n            \"safeZones\": []\n        },\n        {\n            \"id\": \"39e89959-bf23-4cd1-b0b8-d1f5985a78d6\",\n            \"name\": \"Ali\",\n            \"gender\": 0,\n            \"birthDate\": \"2018-05-10T00:00:00\",\n            \"deviceId\": \"watch123\",\n            \"safeZones\": []\n        },\n        {\n            \"id\": \"9c851aaf-b714-4d5c-872a-df8fbcdfda99\",\n            \"name\": \"Alaa\",\n            \"gender\": 1,\n            \"birthDate\": \"2026-02-10T00:00:00\",\n            \"deviceId\": \"\",\n            \"safeZones\": []\n        },\n        {\n            \"id\": \"ddf57212-c8a9-4e56-ac44-8c02f66e7b9e\",\n            \"name\": \"khalid\",\n            \"gender\": 0,\n            \"birthDate\": \"2026-02-13T00:00:00\",\n            \"deviceId\": \"\",\n            \"safeZones\": []\n        },\n        {\n            \"id\": \"f34c7f2f-87b3-4009-9488-15e6d2989f69\",\n            \"name\": \"lina\",\n            \"gender\": 1,\n            \"birthDate\": \"2026-02-12T00:00:00\",\n            \"deviceId\": \"\",\n            \"safeZones\": []\n        }\n    ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GetChild",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjJkNDMxMTY1LTMxMWYtNDYwZi1hMDllLWU0MDBiNzc0MmU5ZSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MDI3MX0.X9yIeOW6ysVoHxDfLhoa8xYdSTHrkaIS--zL48juR40",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://malaz.runasp.net/Child/39e89959-bf23-4cd1-b0b8-d1f5985a78d6",
+              "protocol": "https",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "Child",
+                "39e89959-bf23-4cd1-b0b8-d1f5985a78d6"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "GetChild",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://malaz.runasp.net/Child/39e89959-bf23-4cd1-b0b8-d1f5985a78d6",
+                  "protocol": "https",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "Child",
+                    "39e89959-bf23-4cd1-b0b8-d1f5985a78d6"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 03 Mar 2026 13:54:51 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": {\n        \"id\": \"39e89959-bf23-4cd1-b0b8-d1f5985a78d6\",\n        \"name\": \"Ali\",\n        \"gender\": 0,\n        \"birthDate\": \"2018-05-10T00:00:00\",\n        \"deviceId\": \"watch123\",\n        \"safeZones\": [\n            {\n                \"id\": \"9e673cd9-f490-495b-8ebf-e96e7873485c\",\n                \"name\": \"School\",\n                \"latitude\": 31.0409,\n                \"longitude\": 31.3785,\n                \"radiusInMeters\": 200,\n                \"type\": 0,\n                \"typeDisplayName\": \"School\",\n                \"createdAt\": \"2026-02-16T05:27:12.6693812\"\n            },\n            {\n                \"id\": \"b685885c-4546-4f56-ac13-226015631490\",\n                \"name\": \"Home\",\n                \"latitude\": 31.0409,\n                \"longitude\": 31.3785,\n                \"radiusInMeters\": 200,\n                \"type\": 1,\n                \"typeDisplayName\": \"Home\",\n                \"createdAt\": \"2026-02-16T05:35:38.1399815\"\n            },\n            {\n                \"id\": \"dac23966-bc3b-4d94-8f9a-83fa41e1c4a6\",\n                \"name\": \"Home\",\n                \"latitude\": 31.0409,\n                \"longitude\": 31.3785,\n                \"radiusInMeters\": 200,\n                \"type\": 1,\n                \"typeDisplayName\": \"Home\",\n                \"createdAt\": \"2026-02-16T06:10:57.9507475\"\n            }\n        ]\n    }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SafeZone",
+      "item": [
+        {
+          "name": "Add",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjJkNDMxMTY1LTMxMWYtNDYwZi1hMDllLWU0MDBiNzc0MmU5ZSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MDI3MX0.X9yIeOW6ysVoHxDfLhoa8xYdSTHrkaIS--zL48juR40",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"childId\": \"39e89959-bf23-4cd1-b0b8-d1f5985a78d6\",\r\n  \"name\": \"Home2\",\r\n  \"latitude\": 31.0409,\r\n  \"longitude\": 31.3785,\r\n  \"radiusInMeters\": 200,\r\n  \"type\": 1\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://malaz.runasp.net/api/SafeZone/add",
+              "protocol": "https",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "api",
+                "SafeZone",
+                "add"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Add",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"childId\": \"39e89959-bf23-4cd1-b0b8-d1f5985a78d6\",\r\n  \"name\": \"Home2\",\r\n  \"latitude\": 31.0409,\r\n  \"longitude\": 31.3785,\r\n  \"radiusInMeters\": 200,\r\n  \"type\": 1\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://malaz.runasp.net/api/SafeZone/add",
+                  "protocol": "https",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "api",
+                    "SafeZone",
+                    "add"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 03 Mar 2026 13:57:42 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": {\n        \"id\": \"394fd6e4-ecad-4e00-a1f2-e188ee8ec0e2\",\n        \"name\": \"Home2\",\n        \"latitude\": 31.0409,\n        \"longitude\": 31.3785,\n        \"radiusInMeters\": 200,\n        \"type\": 1,\n        \"typeDisplayName\": \"Home\",\n        \"createdAt\": \"2026-03-03T13:57:43.8453859Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjJkNDMxMTY1LTMxMWYtNDYwZi1hMDllLWU0MDBiNzc0MmU5ZSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MDI3MX0.X9yIeOW6ysVoHxDfLhoa8xYdSTHrkaIS--zL48juR40",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://malaz.runasp.net/api/SafeZone/child/39e89959-bf23-4cd1-b0b8-d1f5985a78d6",
+              "protocol": "https",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "api",
+                "SafeZone",
+                "child",
+                "39e89959-bf23-4cd1-b0b8-d1f5985a78d6"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "GetAllForChild",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://malaz.runasp.net/api/SafeZone/child/39e89959-bf23-4cd1-b0b8-d1f5985a78d6",
+                  "protocol": "https",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "api",
+                    "SafeZone",
+                    "child",
+                    "39e89959-bf23-4cd1-b0b8-d1f5985a78d6"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 03 Mar 2026 13:59:46 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": [\n        {\n            \"id\": \"394fd6e4-ecad-4e00-a1f2-e188ee8ec0e2\",\n            \"name\": \"Home2\",\n            \"latitude\": 31.0409,\n            \"longitude\": 31.3785,\n            \"radiusInMeters\": 200,\n            \"type\": 1,\n            \"typeDisplayName\": \"Home\",\n            \"createdAt\": \"2026-03-03T13:57:43.8453859\"\n        },\n        {\n            \"id\": \"9e673cd9-f490-495b-8ebf-e96e7873485c\",\n            \"name\": \"School\",\n            \"latitude\": 31.0409,\n            \"longitude\": 31.3785,\n            \"radiusInMeters\": 200,\n            \"type\": 0,\n            \"typeDisplayName\": \"School\",\n            \"createdAt\": \"2026-02-16T05:27:12.6693812\"\n        },\n        {\n            \"id\": \"b685885c-4546-4f56-ac13-226015631490\",\n            \"name\": \"Home\",\n            \"latitude\": 31.0409,\n            \"longitude\": 31.3785,\n            \"radiusInMeters\": 200,\n            \"type\": 1,\n            \"typeDisplayName\": \"Home\",\n            \"createdAt\": \"2026-02-16T05:35:38.1399815\"\n        },\n        {\n            \"id\": \"dac23966-bc3b-4d94-8f9a-83fa41e1c4a6\",\n            \"name\": \"Home\",\n            \"latitude\": 31.0409,\n            \"longitude\": 31.3785,\n            \"radiusInMeters\": 200,\n            \"type\": 1,\n            \"typeDisplayName\": \"Home\",\n            \"createdAt\": \"2026-02-16T06:10:57.9507475\"\n        }\n    ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GetOneZone",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjNiYWIyZTU3LTJhNTctNGI5NS04Y2E3LTYwMjkwYjFhMzQyZiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MzEwN30.5fyiiB1_Sp6QbzQwlLgOO2d-uqx6k80vsQo8c3QaXj8",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://malaz.runasp.net/api/SafeZone/9e673cd9-f490-495b-8ebf-e96e7873485c",
+              "protocol": "https",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "api",
+                "SafeZone",
+                "9e673cd9-f490-495b-8ebf-e96e7873485c"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "GetOneZone",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://malaz.runasp.net/api/SafeZone/9e673cd9-f490-495b-8ebf-e96e7873485c",
+                  "protocol": "https",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "api",
+                    "SafeZone",
+                    "9e673cd9-f490-495b-8ebf-e96e7873485c"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Thu, 05 Mar 2026 12:22:31 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": {\n        \"id\": \"9e673cd9-f490-495b-8ebf-e96e7873485c\",\n        \"name\": \"School\",\n        \"latitude\": 31.0409,\n        \"longitude\": 31.3785,\n        \"radiusInMeters\": 200,\n        \"type\": 0,\n        \"typeDisplayName\": \"School\",\n        \"createdAt\": \"2026-02-16T05:27:12.6693812\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjNiYWIyZTU3LTJhNTctNGI5NS04Y2E3LTYwMjkwYjFhMzQyZiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MzEwN30.5fyiiB1_Sp6QbzQwlLgOO2d-uqx6k80vsQo8c3QaXj8",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"Name\": \"School1\",\r\n  \"Latitude\": 30.0561,\r\n  \"Longitude\": 31.2394,\r\n  \"RadiusInMeters\": 150\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://malaz.runasp.net/api/SafeZone/9e673cd9-f490-495b-8ebf-e96e7873485c",
+              "protocol": "https",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "api",
+                "SafeZone",
+                "9e673cd9-f490-495b-8ebf-e96e7873485c"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Update",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"Name\": \"School1\",\r\n  \"Latitude\": 30.0561,\r\n  \"Longitude\": 31.2394,\r\n  \"RadiusInMeters\": 150\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://malaz.runasp.net/api/SafeZone/9e673cd9-f490-495b-8ebf-e96e7873485c",
+                  "protocol": "https",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "api",
+                    "SafeZone",
+                    "9e673cd9-f490-495b-8ebf-e96e7873485c"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Thu, 05 Mar 2026 12:24:43 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": {\n        \"id\": \"9e673cd9-f490-495b-8ebf-e96e7873485c\",\n        \"name\": \"School1\",\n        \"latitude\": 30.0561,\n        \"longitude\": 31.2394,\n        \"radiusInMeters\": 150,\n        \"type\": 0,\n        \"typeDisplayName\": \"School\",\n        \"createdAt\": \"2026-02-16T05:27:12.6693812\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delet",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM5OTdlYTEwLWExYjktNDdhMi05MjIyLWIyMmE1YzYyOGZmNiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJiYXNtYWxhQGdtYWlsLmNvbSIsImp0aSI6IjNiYWIyZTU3LTJhNTctNGI5NS04Y2E3LTYwMjkwYjFhMzQyZiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImV4cCI6MTc3MzE1MzEwN30.5fyiiB1_Sp6QbzQwlLgOO2d-uqx6k80vsQo8c3QaXj8",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "https://malaz.runasp.net/api/SafeZone/9e673cd9-f490-495b-8ebf-e96e7873485c",
+              "protocol": "https",
+              "host": [
+                "malaz",
+                "runasp",
+                "net"
+              ],
+              "path": [
+                "api",
+                "SafeZone",
+                "9e673cd9-f490-495b-8ebf-e96e7873485c"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Delet",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "https://malaz.runasp.net/api/SafeZone/9e673cd9-f490-495b-8ebf-e96e7873485c",
+                  "protocol": "https",
+                  "host": [
+                    "malaz",
+                    "runasp",
+                    "net"
+                  ],
+                  "path": [
+                    "api",
+                    "SafeZone",
+                    "9e673cd9-f490-495b-8ebf-e96e7873485c"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Server",
+                  "value": "Microsoft-IIS/10.0"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "ASP.NET"
+                },
+                {
+                  "key": "Date",
+                  "value": "Thu, 05 Mar 2026 12:25:22 GMT"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"errorMessages\": [],\n    \"data\": null\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

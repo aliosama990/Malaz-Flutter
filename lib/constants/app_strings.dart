@@ -129,6 +129,14 @@ class AppStrings {
   static const String deviceIdRequired = 'رقم الجهاز مطلوب';
   static const String addChildError = 'حدث خطأ أثناء إضافة الطفل';
   static const String addChildSuccess = 'تم إضافة الطفل بنجاح';
+  static const String childDeviceAlreadyLinkedError =
+      'رقم الجهاز مستخدم بالفعل. يرجى التحقق من الرقم أو استخدام جهاز آخر.';
+  static const String childResponseReadError =
+      'تم إرسال البيانات، لكن تعذر تأكيدها من الخادم. يرجى تحديث الصفحة قبل إعادة المحاولة.';
+  static const String childValidationError =
+      'بعض بيانات الطفل غير صحيحة. يرجى مراجعتها والمحاولة مرة أخرى.';
+  static const String childSaveFailedError =
+      'تعذر حفظ بيانات الطفل الآن. حاول مرة أخرى بعد قليل.';
   static const String birthDateRequired = " ادخل تاريخ ميلاد الطفل";
 
   // ✅ General
