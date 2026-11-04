@@ -1,7 +1,9 @@
 # Malaz
-### Flutter client for child monitoring
+### Ongoing graduation project · Flutter client
 
-Malaz is an Arabic-first Flutter application with parent/child management, safe zones, chat and live device-event integrations. This repository contains the **client application**, not the external backend or device firmware.
+Malaz is an ongoing graduation project for child monitoring. **Ali Osama developed the complete Flutter client**, including its interface, application state and client-side integrations for child profiles, safe zones, chat, notifications and live device events.
+
+This repository contains the Arabic-first Flutter client. The backend and device firmware are separate components.
 
 ## Implemented in the client
 
@@ -69,4 +71,4 @@ Release signing is still configured with debug keys in the Android build file. T
 
 ## Attribution and licensing
 
-This documentation describes the existing repository without assigning individual authorship of features. Retain original contributors and Git history. No license file is currently present; no new license or redistribution permission is implied.
+Flutter client development: **Ali Osama**. Existing contributor credits and Git history are preserved. No license file is currently included; contact the repository owner about reuse.
